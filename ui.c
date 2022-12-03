@@ -1,6 +1,14 @@
 #include <stdlib.h>
 #include <ncurses.h>
-#include <forms.h>
+#include <stdio.h>
+#include <string.h>
+//#include <forms.h>
+
+// Windows
+WINDOW * DISPLAY = NULL;
+WINDOW * TEXT_BOX = NULL;
+WINDOW * MISC_BAR = NULL;
+
 
 void screensetup(void) {
     // Start screen
@@ -13,11 +21,6 @@ void screensetup(void) {
     keypad(stdscr, TRUE);
     // Adds CTRL + C option to terminate
     cbreak();
-}
-
-int main(void) {
-    // Setup screen
-    screensetup();
 
     // Bounds
     int lower_bound = LINES - 1;
@@ -26,36 +29,66 @@ int main(void) {
     int left_bound = 0;
 
     // Creating windows
-    WINDOW * display_box = newwin((int) LINES * 0.7, (int) COLS * 0.8, upper_bound, left_bound);
-    if (display_box == NULL) {
+    DISPLAY = newwin((int) LINES * 0.7, (int) COLS * 0.8, upper_bound, left_bound);
+    if (DISPLAY == NULL) {
         perror("Couldn't initialize text box");
     }
 
-    WINDOW * text_box = newwin((int) LINES * 0.2, (int) COLS - 1, 2 + (int) LINES * 0.7, left_bound);
-    if (text_box == NULL) {
+    TEXT_BOX = newwin((int) LINES * 0.2, (int) COLS - 1, 2 + (int) LINES * 0.7, left_bound);
+    if (TEXT_BOX == NULL) {
         perror("Couldn't initialize text box");
     }
 
-    WINDOW * misc_box = newwin((int) LINES * 0.7, (int) COLS * 0.2, upper_bound,  (int) COLS * 0.8);
-    if (misc_box == NULL) {
+    MISC_BAR = newwin((int) LINES * 0.7, (int) COLS * 0.2, upper_bound,  (int) COLS * 0.8);
+    if (MISC_BAR == NULL) {
         perror("Couldn't initialize text box");
     }
     refresh();
 
     // Adding borders around windows and refreshing them
-    box(display_box, 0, 0);
-    box(text_box, 0, 0);
-    box(misc_box, 0, 0);
+    box(DISPLAY, 0, 0);
+    box(TEXT_BOX, 0, 0);
+    box(MISC_BAR, 0, 0);
 
-    wrefresh(display_box);
-    wrefresh(text_box);
-    wrefresh(misc_box);
+    wrefresh(DISPLAY);
+    wrefresh(TEXT_BOX);
+    wrefresh(MISC_BAR);
 
     // Title
     move(1,2);
     printw("Solar!");
     refresh();
+}
 
+int main(void) {
+    // Setup screen
+    screensetup();
+
+    // printing text file and letting you choose
+    FILE * file = fopen("test.txt", "r");
+    if (!file){
+        return false;
+    }
+
+    char * read_line = malloc(sizeof(char) * 100);
+
+    int display_max_x, display_max_y;
+    int current_line = 1;
+    getmaxyx(DISPLAY, display_max_y, display_max_x);
+
+    while (fgets(read_line, 100, file)) {
+        // TODO: Figure out how to convert the linenumber to string
+        mvwprintw(DISPLAY, current_line % display_max_y, 1, "N");
+        mvwprintw(DISPLAY, current_line % display_max_y, 4,read_line);
+        current_line++;
+
+        box(DISPLAY, 0, 0);
+        wrefresh(DISPLAY);   
+    }
+    
+    free(read_line);
+    fclose(file);
+    
     getch();
     // while (1) {
     //     addch(getch());

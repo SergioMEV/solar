@@ -22,4 +22,6 @@ refer to p2p chat lab
 
 ### (Sergio) To Do:
  - [ ] look into form.h for text box in ui
- - [ ] look into displaying text using curses for display box
+ - [x] look into displaying text using curses for display box
+ - [ ] implement line selection and line numbers
+ 
