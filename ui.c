@@ -12,8 +12,6 @@ WINDOW * MISC_BAR = NULL;
 
 int MIN_LINE = 0;
 
-extern file_content_t* file_content;
-
 void screensetup(void) {
     // Start screen
     initscr();
@@ -64,7 +62,7 @@ void screensetup(void) {
     refresh();
 }
 
-int print_text(int display_max_y) {
+int print_text(int display_max_y, file_content_t *file_content) {
     char *line_number = (char*)malloc(10 * sizeof(char));
     // loop through array while line in line_range 
     int i = MIN_LINE; //MIN_LINE equals smallest line currently visible
@@ -83,7 +81,7 @@ int main(void) {
     screensetup();
 
     // printing text file and letting you choose
-    FILE * file = fopen("test.txt", "r");
+    FILE * file = fopen("Archive/test.txt", "r");
     if (!file){
         return false;
     }

@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include "file.h"
 
-#define FILE_CONTENT_INIT_SIZE 4
 // !!!TODO fix double free
 
 file_content_t *file_content;
