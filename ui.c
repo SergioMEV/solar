@@ -2,6 +2,7 @@
 #include <ncurses.h>
 #include <stdio.h>
 #include <string.h>
+#include 
 //#include <forms.h>
 
 // Windows
@@ -58,6 +59,10 @@ void screensetup(void) {
     move(1,2);
     printw("Solar!");
     refresh();
+}
+
+int print_text(void) {
+
 }
 
 int main(void) {
