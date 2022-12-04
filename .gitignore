@@ -5,4 +5,4 @@ ui
 Archive/
 *.DSYM/
 file_system
-ui
+*.txt
