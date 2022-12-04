@@ -84,7 +84,7 @@ int main()
 
   fprintf(fptr, "\nhahaha, new stuff");
   print_file_content(file_content);
-  // destroy_file_contnt(file_content);
+  destroy_file_contnt(file_content);
   fclose(fptr);
 
   return 0;
