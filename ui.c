@@ -10,7 +10,7 @@ WINDOW * DISPLAY = NULL;
 WINDOW * TEXT_BOX = NULL;
 WINDOW * MISC_BAR = NULL;
 
-int MIN_LINE = 0
+int MIN_LINE = 0;
 
 void screensetup(void) {
     // Start screen
