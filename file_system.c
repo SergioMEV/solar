@@ -1,21 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "file.h"
 
 #define FILE_CONTENT_INIT_SIZE 4
 // !!!TODO fix double free
-typedef struct line_struct
-{
-  char *text;
-} line_t;
 
-typedef struct file_content_struct
-{
-  line_t **file_content_head;
-  size_t total_line_size;
-  size_t line_capacity;
-} file_content_t;
-
-// file_content_t *file_content;
+file_content_t *file_content;
 
 line_t *init_line()
 {
@@ -26,7 +16,8 @@ line_t *init_line()
 
 file_content_t *init_file_content()
 {
-  file_content_t *file_content = (file_content_t *)malloc(sizeof(file_content_t));
+  //file_content_t *file_content = (file_content_t *)malloc(sizeof(file_content_t));
+  file_content = (file_content_t *)malloc(sizeof(file_content_t));
   file_content->file_content_head = (line_t **)malloc(sizeof(line_t *) * FILE_CONTENT_INIT_SIZE);
   file_content->total_line_size = 0;
   file_content->line_capacity = FILE_CONTENT_INIT_SIZE;

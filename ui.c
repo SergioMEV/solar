@@ -2,7 +2,7 @@
 #include <ncurses.h>
 #include <stdio.h>
 #include <string.h>
-#include 
+#include "file_system.h"
 //#include <forms.h>
 
 // Windows
@@ -10,6 +10,7 @@ WINDOW * DISPLAY = NULL;
 WINDOW * TEXT_BOX = NULL;
 WINDOW * MISC_BAR = NULL;
 
+int MIN_LINE = 0
 
 void screensetup(void) {
     // Start screen
@@ -61,8 +62,15 @@ void screensetup(void) {
     refresh();
 }
 
-int print_text(void) {
+int print_text(int display_max_y) {
+    // loop through array while line in line_range 
+    int i = MIN_LINE; //MIN_LINE equals smallest line currently visible
 
+    while (i < display_max_y + MIN_LINE) {
+        continue;
+    }
+
+    return 1;
 }
 
 int main(void) {
