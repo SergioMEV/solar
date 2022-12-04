@@ -7,4 +7,4 @@ clean:
 	rm -rf main
 
 main: main.c
-	$(CC) $(CFLAGS) -o main main.c
+	$(CC) $(CFLAGS) -o main main.c -fsanitize=address
