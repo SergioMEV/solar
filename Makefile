@@ -1,13 +1,13 @@
 CC := clang
 CFLAGS := -g
 
-all: ui
+all: ui file_system
 
 clean:
 	rm -rf ui file_system
 
 ui: ui.c 
-	$(CC) $(CFLAGS) -o ui ui.c -lncurses
+	$(CC) $(CFLAGS) -o ui ui.c file_system.c -lncurses
 
 file_system: file_system.c
 	$(CC) $(CFLAGS) -o file_system file_system.c -fsanitize=address

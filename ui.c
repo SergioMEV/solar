@@ -2,7 +2,7 @@
 #include <ncurses.h>
 #include <stdio.h>
 #include <string.h>
-#include "file_system.h"
+#include "file.h"
 //#include <forms.h>
 
 // Windows
@@ -11,6 +11,8 @@ WINDOW * TEXT_BOX = NULL;
 WINDOW * MISC_BAR = NULL;
 
 int MIN_LINE = 0;
+
+extern file_content_t* file_content;
 
 void screensetup(void) {
     // Start screen
@@ -63,11 +65,14 @@ void screensetup(void) {
 }
 
 int print_text(int display_max_y) {
+    char *line_number = (char*)malloc(10 * sizeof(char));
     // loop through array while line in line_range 
     int i = MIN_LINE; //MIN_LINE equals smallest line currently visible
 
-    while (i < display_max_y + MIN_LINE) {
-        continue;
+    while (i <= display_max_y + MIN_LINE) {
+        sprintf(line_number, "%d", i);
+        mvwprintw(DISPLAY, i % display_max_y, 1, line_number);
+        mvwprintw(DISPLAY, i % display_max_y, 4, file_content->file_content_head[i]->text);
     }
 
     return 1;
@@ -89,9 +94,12 @@ int main(void) {
     int current_line = 1;
     getmaxyx(DISPLAY, display_max_y, display_max_x);
 
+    char *line_number = (char*)malloc(10 * sizeof(char));
+
     while (fgets(read_line, 100, file)) {
+        sprintf(line_number, "%d", current_line);
         // TODO: Figure out how to convert the linenumber to string
-        mvwprintw(DISPLAY, current_line % display_max_y, 1, "N");
+        mvwprintw(DISPLAY, current_line % display_max_y, 1, line_number);
         mvwprintw(DISPLAY, current_line % display_max_y, 4,read_line);
         current_line++;
 
