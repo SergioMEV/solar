@@ -1,3 +1,5 @@
+#define FILE_CONTENT_INIT_SIZE 4
+
 typedef struct line_struct
 {
   char *text;
