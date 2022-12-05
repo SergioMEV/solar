@@ -81,6 +81,9 @@ int main()
     get_line_buffer = NULL;
     add_line(file_content, new_line);
   }
+  // when we break out of the loop, we need to free the space allocated for the EOF
+  // to avoid memory leaks!  
+  free(get_line_buffer);
 
   fprintf(fptr, "\nhahaha, new stuff");
   print_file_content(file_content);
