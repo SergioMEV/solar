@@ -3,7 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 
-// #include "message.h"
+#include "message.h"
 #include "socket.h"
 
 int main(int argc, char** argv) {
@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
     // Send a message to the server
     char* buffer = NULL;
     char* message;
-    size_t buffsize = 0;
+    size_t buffersize = 0;
 
     do {
         getline(&buffer, &buffersize, stdin);
