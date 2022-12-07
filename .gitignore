@@ -8,3 +8,5 @@ Archive/
 *.DSYM/
 file_system
 *.txt
+*.o
+*.d
