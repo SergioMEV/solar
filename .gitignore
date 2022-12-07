@@ -1,5 +1,7 @@
 file_system
 ui
+server
+client
 .DS_Store
 .vscode/
 Archive/
