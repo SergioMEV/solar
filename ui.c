@@ -11,6 +11,7 @@ WINDOW * TEXT_BOX = NULL;
 WINDOW * MISC_BAR = NULL;
 
 int MIN_LINE = 0;
+int MAX_CHARS = 100;
 
 void screensetup(void) {
     // Start screen
@@ -62,6 +63,22 @@ void screensetup(void) {
     refresh();
 }
 
+int text_box_handler(void) {
+    int text_max_x, text_max_y;
+    getmaxyx(TEXT_BOX, text_max_y, text_max_x);
+    
+    int c, x;
+    x = 2;
+    while((c = getch()) && x != 102){
+        mvwaddch(TEXT_BOX, 1, x, c);
+        wrefresh(TEXT_BOX);
+
+        x++;
+    }
+
+    return 1;
+}
+
 int print_text(int display_max_y, file_content_t *file_content) {
     char *line_number = (char*)malloc(10 * sizeof(char));
     // loop through array while line in line_range 
@@ -108,12 +125,7 @@ int main(void) {
     free(read_line);
     fclose(file);
     
-    getch();
-    // while (1) {
-    //     addch(getch());
-    //     refresh();
-    // }
-    
+    text_box_handler();
 
     endwin();
 
