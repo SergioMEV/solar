@@ -7,8 +7,10 @@
 
 int main(void)
 {
+    printf("check point %d\n", 0);
     // Setup screen
     screensetup();
+    printf("check point %d\n", 1);
 
     FILE *fptr;
     char *get_line_buffer = NULL;
@@ -28,6 +30,7 @@ int main(void)
         perror("Unable to open the file.");
         exit(1);
     }
+    printf("check point %d\n", 2);
     while ((read_size = getline(&get_line_buffer, &buffer_size, fptr)) != -1)
     {
         line_t *new_line = init_line();
@@ -36,8 +39,9 @@ int main(void)
         get_line_buffer = NULL;
         add_line(file_content, new_line);
     }
+    printf("check point %d\n", 3);
     // when we break out of the loop, we need to free the space allocated for the EOF
-    // to avoid memory leaks!
+    // to prevent memory leaks!
     free(get_line_buffer);
 
     // Warning: restricting line number to be smaller than 10^10

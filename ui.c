@@ -1,6 +1,11 @@
 #include "ui.h"
 // #include <forms.h>
 
+// Windows
+WINDOW *DISPLAY = NULL;
+WINDOW *TEXT_BOX = NULL;
+WINDOW *MISC_BAR = NULL;
+
 int MIN_LINE = 0;
 
 void screensetup(void)
