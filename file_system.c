@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include "file.h"
 
-file_content_t *file_content;
-
 line_t *init_line()
 {
   line_t *new_line = (line_t *)malloc(sizeof(line_t));
@@ -13,7 +11,7 @@ line_t *init_line()
 
 file_content_t *init_file_content()
 {
-  file_content = (file_content_t *)malloc(sizeof(file_content_t));
+  file_content_t *file_content = (file_content_t *)malloc(sizeof(file_content_t));
   file_content->file_content_head = NULL;
   file_content->total_line_size = 0;
   return file_content;
