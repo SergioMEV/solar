@@ -8,58 +8,65 @@
 #include "message.h"
 #include "socket.h"
 
-#define NUM_THREAD 4
+// Dynamic array to store socket_fds
+int* clients = NULL;
+// Number of clients
+int num_clients = 0;
 
-typedef struct thread_args {
-  int client_socket_fd;
-} thread_args_t;
-
-
-void* thread_fn(void* args) {
-  thread_args_t* arg = (thread_args_t*) args;
+void* thread_fn(void* socket_fd) {
+  int client_socket_fd = *(int*)socket_fd;
   char* message;
-  int client_socket_fd = arg->client_socket_fd;
-    // Read a message from the client & Send a message to the client
-    do {
-      message = receive_message(client_socket_fd);
-     
-      if (message == NULL) {
-        perror("Failed to read message from client");
-        exit(EXIT_FAILURE);
+
+  // Read a message from the client & send a message to the client
+  do {
+    message = receive_message(client_socket_fd);
+
+    if (message == NULL) {
+      int counter = 0;
+      for (int i = 0; i < num_clients; i++) {
+        if (clients[i] == client_socket_fd) {
+          break;
+        }
+        counter++;
       }
-     
-      if (strcmp(message, "quit\n") == 0) {
-        printf("Client exited\n");
-        break;
+      for (int i = counter; i < num_clients - 1; i++) {
+        clients[i] = clients[i + 1];
+      }
+      num_clients--;
+      clients = (int*)realloc(clients, sizeof(int)*num_clients);
+      return NULL;
+    }
+
+    if (strcmp(message, "quit\n") == 0) {
+      printf("Client exited\n");
+      break;
+    }
+
+    // Sending message to clients in the network
+    for (int i = 0; i < num_clients; i++) {
+      // Skip if socket_fd is the same
+      if (clients[i] == client_socket_fd) {
+          continue;
       }
 
-      // counter for the loop
-      for (int i = 0; i < strlen(message); i++) {
-        message[i] = toupper(message[i]);
+      if (send_message(clients[i], message) == -1) {
+          perror("Failed to send message to client");
+          exit(EXIT_FAILURE);
       }
+    }
+  } while (1);
 
-      int rc = send_message(client_socket_fd, message);
-      if (rc == -1) {
-        perror("Failed to send message to client");
-        exit(EXIT_FAILURE);
-      }
-    } while (1);
-
-    // Print the message
-    printf("Client sent: %s\n", message);
-
-    // Free the message string
-    free(message);
-
-    close(client_socket_fd);
+  // Print the message
+  printf("Client sent: %s\n", message);
+  // Free the message string
+  free(message);
+  // Close socket
+  close(client_socket_fd);
 
     return NULL;
 }
 
 int main() {
-  pthread_t threads[NUM_THREAD];
-  thread_args_t args[NUM_THREAD];
-
   // Open a server socket
   unsigned short port = 0;
   int server_socket_fd = server_socket_open(&port);
@@ -74,11 +81,9 @@ int main() {
     exit(EXIT_FAILURE);
   }
 
-  int i = 0;
+  printf("Server listening on port %u\n", port);
 
-  while (i < NUM_THREAD) {
-    printf("Server listening on port %u\n", port);
-
+  while (1) {
     // Wait for a client to connect
     int client_socket_fd = server_socket_accept(server_socket_fd);
     if (client_socket_fd == -1) {
@@ -88,9 +93,17 @@ int main() {
 
     printf("Client connected!\n");
 
-    args[i].client_socket_fd = client_socket_fd;
-    pthread_create(&threads[i], NULL, thread_fn, &args[i]);
-    i++;
+    // Save client's information
+    num_clients++;
+    clients = (int*)realloc(clients, sizeof(int)*num_clients);
+    clients[num_clients - 1] = client_socket_fd;
+
+    // Create a thread to receive and send messages to peers
+    pthread_t server_thread;
+    if (pthread_create(&server_thread, NULL, &thread_fn, &client_socket_fd)) {
+      perror("pthread_create failed");
+      exit(EXIT_FAILURE);
+    }
   }
 
   // Close sockets
