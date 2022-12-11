@@ -7,7 +7,7 @@ clean:
 	rm -rf ui file_system server client
 
 ui: ui.c 
-	$(CC) $(CFLAGS) -o ui ui.c -lncurses
+	$(CC) $(CFLAGS) -o ui ui.c -lncurses -lform
 
 file_system: file_system.c
 	$(CC) $(CFLAGS) -o file_system file_system.c -fsanitize=address
