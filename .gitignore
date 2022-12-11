@@ -8,5 +8,7 @@ Archive/
 *.DSYM/
 file_system
 *.txt
+*.o
+*.d
 ui_testing.c
 ui_testing

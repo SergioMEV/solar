@@ -15,22 +15,16 @@ line_t *init_line()
 
 file_content_t *init_file_content()
 {
-  //file_content_t *file_content = (file_content_t *)malloc(sizeof(file_content_t));
   file_content = (file_content_t *)malloc(sizeof(file_content_t));
-  file_content->file_content_head = (line_t **)malloc(sizeof(line_t *) * FILE_CONTENT_INIT_SIZE);
+  file_content->file_content_head = NULL;
   file_content->total_line_size = 0;
-  file_content->line_capacity = FILE_CONTENT_INIT_SIZE;
   return file_content;
 }
 
 void add_line(file_content_t *file_content, line_t *new_line)
 {
-  if (file_content->line_capacity == file_content->total_line_size)
-  {
-    file_content->file_content_head = (line_t **)realloc((void *)file_content->file_content_head,
-                                                         2 * (file_content->line_capacity) * sizeof(line_t *));
-    file_content->line_capacity *= 2;
-  }
+  file_content->file_content_head = (line_t **)realloc((void *)file_content->file_content_head,
+                                                       (file_content->total_line_size + 1) * sizeof(line_t *));
   file_content->file_content_head[file_content->total_line_size++] = new_line;
 }
 
@@ -82,7 +76,7 @@ int main()
     add_line(file_content, new_line);
   }
   // when we break out of the loop, we need to free the space allocated for the EOF
-  // to avoid memory leaks!  
+  // to avoid memory leaks!
   free(get_line_buffer);
 
   fprintf(fptr, "\nhahaha, new stuff");
