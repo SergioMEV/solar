@@ -47,8 +47,6 @@ FILE *open_file_append_mode(char *file_name)
 {
   FILE *fptr;
 
-  file_content_t *file_content = init_file_content();
-
   fptr = fopen(file_name, "r+");
   if (fptr == NULL)
   {
