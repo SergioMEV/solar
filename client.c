@@ -7,23 +7,18 @@
 #include "message.h"
 #include "socket.h"
 
-void* thread_fn(void* socket_fd) {
-  printf("in 1\n");
-  int server_socket_fd = *(int*)socket_fd;
-
+void* server_listener_thread_fn(void* server_socket_fd_void) {
+  int server_socket_fd = *(int*)server_socket_fd_void;
   while (1) {
-    printf("in 2 %d\n", server_socket_fd);
     // Receive message from clients
     char* message = receive_message(server_socket_fd);
     if (message == NULL){
       perror("message received fail.");
       exit(1);
     }
-    printf("in 3\n");
-    // Sending message to peers in the network
-    // send_message(client_socket_fd, message);
 
     printf("Server: %s", message);
+    free(message);
   }
   return NULL;
 }
@@ -45,28 +40,25 @@ int main(int argc, char** argv) {
     exit(EXIT_FAILURE);
   }
 
+  pthread_t server_listener_thread;
+  if (pthread_create(&server_listener_thread, NULL, server_listener_thread_fn, &socket_fd)) {
+    perror("pthread_create failed");
+    exit(EXIT_FAILURE);
+  }
+
   // Send a message to the server
   char* buffer = NULL;
-  char* message;
   size_t buffersize = 0;
-
-  // pthread_t* thread;
-  // printf("before thread %d\n", socket_fd);
-  // if (pthread_create(thread, NULL, &thread_fn, &socket_fd)) {
-  //   perror("pthread_create failed");
-  //   exit(EXIT_FAILURE);
-  // }
-
   do {
     getline(&buffer, &buffersize, stdin);
-
+    buffer[buffersize-1] = '\n';
     int rc = send_message(socket_fd, buffer);
-    message = receive_message(socket_fd);
-    printf("Server: %s", message);
-
-    if (strcmp(buffer, "quit\n") == 0) break;
+    if (rc == -1) {
+      perror("Failed to send message to the server");
+      exit(EXIT_FAILURE);
+    }
   } while (1);
-
+  free(buffer);
   // Close socket
   close(socket_fd);
 }
