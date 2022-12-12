@@ -4,7 +4,6 @@ server
 client
 .DS_Store
 .vscode/
-Archive/
 *.DSYM/
 file_system
 *.txt

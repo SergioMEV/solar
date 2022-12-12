@@ -2,10 +2,6 @@
 #include <stdlib.h>
 #include "file.h"
 
-// !!!TODO fix double free
-
-file_content_t *file_content;
-
 line_t *init_line()
 {
   line_t *new_line = (line_t *)malloc(sizeof(line_t));
@@ -15,7 +11,7 @@ line_t *init_line()
 
 file_content_t *init_file_content()
 {
-  file_content = (file_content_t *)malloc(sizeof(file_content_t));
+  file_content_t *file_content = (file_content_t *)malloc(sizeof(file_content_t));
   file_content->file_content_head = NULL;
   file_content->total_line_size = 0;
   return file_content;
@@ -28,8 +24,7 @@ void add_line(file_content_t *file_content, line_t *new_line)
   file_content->file_content_head[file_content->total_line_size++] = new_line;
 }
 
-// !!!Warn: when we are not calling this destroy function, there are no memory leak. i expect memory leaks
-void destroy_file_contnt(file_content_t *file_content)
+void destroy_file_content(file_content_t *file_content)
 {
   for (size_t line_index = 0; line_index < file_content->total_line_size; line_index++)
   {
@@ -48,25 +43,26 @@ void print_file_content(file_content_t *file_content)
   }
 }
 
-int main()
+FILE *open_file_append_mode(char *file_name)
 {
   FILE *fptr;
-  char *get_line_buffer = NULL;
-  size_t buffer_size = 0;
-  size_t read_size;
 
-  // line_t *line2 = (line_t *)malloc(sizeof(line_t));
-  // line2->text = "line2 adfs";
-  // line_t *line3 = (line_t *)malloc(sizeof(line_t));
-  // line3->text = "line3 fdfsdfsa";
-  file_content_t *file_content = init_file_content();
-
-  fptr = fopen("Archive/f1.txt", "r+");
+  fptr = fopen(file_name, "r+");
   if (fptr == NULL)
   {
     printf("Unable to open the file.");
     exit(1);
   }
+  return fptr;
+}
+
+file_content_t *read_file_to_file_content(FILE *fptr)
+{
+  char *get_line_buffer = NULL;
+  size_t buffer_size = 0;
+  size_t read_size;
+
+  file_content_t *file_content = init_file_content();
   while ((read_size = getline(&get_line_buffer, &buffer_size, fptr)) != -1)
   {
     line_t *new_line = init_line();
@@ -78,11 +74,22 @@ int main()
   // when we break out of the loop, we need to free the space allocated for the EOF
   // to avoid memory leaks!
   free(get_line_buffer);
+  return file_content;
+}
 
-  fprintf(fptr, "\nhahaha, new stuff");
-  print_file_content(file_content);
-  destroy_file_contnt(file_content);
+void clean_file_system(FILE *fptr, file_content_t *file_content)
+{
+  destroy_file_content(file_content);
   fclose(fptr);
+}
+
+int main()
+{
+  char *file_name = "Archive/f1.txt";
+  FILE *fptr = open_file_append_mode(file_name);
+  file_content_t *file_content = read_file_to_file_content(fptr);
+  print_file_content(file_content);
+  clean_file_system(fptr, file_content);
 
   return 0;
 }
