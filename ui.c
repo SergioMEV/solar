@@ -10,7 +10,7 @@
 static FORM *text_form;
 static FIELD *fields[2];
 
-static WINDOW *text_body, *text_form_box, *DISPLAY, *MISC_BAR;
+static WINDOW *TEXT_BODY, *TEXT_FORM_BOX, *DISPLAY, *INSTRUCTIONS_BAR;
 
 int MIN_LINE = 0;
 int MAX_CHARS = 100;
@@ -86,22 +86,22 @@ void screensetup(void) {
 
 void text_box_setup() {
     // Text box
-    text_body = newwin((int) LINES * 0.3, (int) COLS - 1, 2 + (int) LINES * 0.6, 0);
-    if (text_body == NULL) {
+    TEXT_BODY = newwin((int) LINES * 0.3, (int) COLS - 1, 2 + (int) LINES * 0.6, 0);
+    if (TEXT_BODY == NULL) {
         perror("Couldn't initialize text box");
     }
-	box(text_body, 0, 0);
+	box(TEXT_BODY, 0, 0);
 
     // Text form
-	text_form_box = derwin(text_body, ((int) LINES * 0.3) - 3, (int) COLS - 3, 2, 1);
-	if (text_form_box == NULL) {
+	TEXT_FORM_BOX = derwin(TEXT_BODY, ((int) LINES * 0.3) - 3, (int) COLS - 3, 2, 1);
+	if (TEXT_FORM_BOX == NULL) {
         perror("Couldn't initialize text form");
     }
-	box(text_form_box, 0, 0);
+	box(TEXT_FORM_BOX, 0, 0);
 
     // Instructions and text label
-	mvwprintw(text_body, 1, 2, "Choose a line to edit and type new text below.");
-	mvwprintw(text_form_box, 1, 1, "Text:");
+	mvwprintw(TEXT_BODY, 1, 2, "Choose a line to edit and type new text below.");
+	mvwprintw(TEXT_FORM_BOX, 1, 1, "Text:");
 
     // Creating fields
 	fields[0] = new_field(1, MAX_CHARS, 5 + (int) LINES * 0.6, 7, 0, 0);
@@ -121,13 +121,13 @@ void text_box_setup() {
 	if (text_form == NULL) {
         perror("Couldn't initialize text form field");
     }
-	set_form_win(text_form, text_form_box);
-	set_form_sub(text_form, derwin(text_form_box, 18, 76, 1, 1));
+	set_form_win(text_form, TEXT_FORM_BOX);
+	set_form_sub(text_form, derwin(TEXT_FORM_BOX, 18, 76, 1, 1));
 	post_form(text_form);
 
 	refresh();
-	wrefresh(text_body);
-	wrefresh(text_form_box);
+	wrefresh(TEXT_BODY);
+	wrefresh(TEXT_FORM_BOX);
 }
 
 void display_setup() {
@@ -140,6 +140,30 @@ void display_setup() {
 
     refresh();
     wrefresh(DISPLAY);
+}
+
+void instructions_setup() {
+    // Creating window
+    INSTRUCTIONS_BAR = newwin((int) LINES * 0.6, (int) COLS * 0.2 - 3, 2, (int) COLS * 0.8 + 2);
+    if (INSTRUCTIONS_BAR == NULL) {
+        perror("Couldn't initialize text box");
+    }
+    box(INSTRUCTIONS_BAR, 0, 0);
+
+    // Writing instructions
+    mvwprintw(INSTRUCTIONS_BAR, 1, 1, "Instructions:");
+
+    mvwprintw(INSTRUCTIONS_BAR, 2, 1, "- Use the arrow keys to select a line and");
+    mvwprintw(INSTRUCTIONS_BAR, 3, 1, "press ENTER to edit it.");
+
+    mvwprintw(INSTRUCTIONS_BAR, 4, 1, "- To insert a new line after the selected");
+    mvwprintw(INSTRUCTIONS_BAR, 5, 1, "line, press 'i'.");
+
+    mvwprintw(INSTRUCTIONS_BAR, 6, 1, "- To delete a selected line, press 'd'.");
+    mvwprintw(INSTRUCTIONS_BAR, 7, 1, "- To append a new line, press 'n'.");
+    
+    refresh();
+    wrefresh(INSTRUCTIONS_BAR);
 }
 
 // DRIVERS
@@ -217,7 +241,7 @@ bool text_box_driver()
                 break;
         }
 
-        wrefresh(text_form_box);
+        wrefresh(TEXT_FORM_BOX);
     }
 
     return FALSE;
@@ -284,10 +308,10 @@ void free_ui() {
     unpost_form(text_form);
 	free_form(text_form);
 	free_field(fields[0]);
-	delwin(text_form_box);
-	delwin(text_body);
+	delwin(TEXT_FORM_BOX);
+	delwin(TEXT_BODY);
 
-    // Free screen
+    // Free display
     delwin(DISPLAY);
 
     // Free stdscreen
@@ -301,11 +325,15 @@ void*  ui_thread_handler(void *args) {
 
     // Setup of UI elements
     screensetup();
+
     display_setup();
     text_box_setup();
+    instructions_setup();
     
+    // Titles
     mvprintw(1, 2, "Solar!");
     mvprintw(1, COLS * 0.82, "Your mother's favorite text editor!");
+
     // Driver that controls user interaction
     ui_driver(file_content);
 
