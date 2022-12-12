@@ -12,3 +12,4 @@ file_system
 *.d
 ui_testing.c
 ui_testing
+main.c

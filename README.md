@@ -21,7 +21,5 @@ https://tldp.org/HOWTO/NCURSES-Programming-HOWTO/index.html
 refer to p2p chat lab
 
 ### (Sergio) To Do:
- - [ ] look into form.h for text box in ui
- - [x] look into displaying text using curses for display box
- - [ ] implement line selection and line numbers
+- [ ] THREADS!!!
  
