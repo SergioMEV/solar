@@ -8,7 +8,9 @@
 #include "message.h"
 #include "socket.h"
 #include "user_info_utils.h"
+#include "file_system.h"
 #include "error_codes.h"
+#include "constants.h"
 
 // user information (fd and username)
 user_infos_array_t *user_infos_struct;
@@ -56,7 +58,6 @@ void *client_listener_thread(void *user_info_void)
 
 int main()
 {
-
   // Open a server socket
   unsigned short port = 0;
   int server_socket_fd = server_socket_open(&port);
@@ -72,10 +73,18 @@ int main()
     perror("listen failed");
     exit(EXIT_FAILURE);
   }
-
   printf("Server listening on port %u\n", port);
 
   user_infos_struct = user_infos_array_init();
+
+  // TODO: make file name a user input
+  char *file_name = malloc(sizeof(char) * MAX_FILE_NAME_LENGTH);
+  strcpy(file_name, "Archive/f1.txt");
+  FILE *fptr = open_file_append_mode(file_name);
+  free(file_name);
+  file_content_t *file_content = read_file_to_file_content(fptr);
+  print_file_content(file_content);
+  clean_file_system(fptr, file_content);
 
   while (1)
   {

@@ -59,13 +59,13 @@ int main(int argc, char **argv)
     perror("Failed to send message to the server");
     exit(EXIT_FAILURE);
   }
-  char *rc_connection = receive_message(server_socket_fd);
-  if (strcmp(rc_connection, ERROR_CODE_DUPLICATE_USER_NAME) == 0)
+  char *connection_status = receive_message(server_socket_fd);
+  if (strcmp(connection_status, ERROR_CODE_DUPLICATE_USER_NAME) == 0)
   {
     perror("The user name is already taken. Please conect with a different user name.\n");
     exit(1);
   }
-  free(rc_connection);
+  free(connection_status);
   pthread_t server_listener_thread;
   if (pthread_create(&server_listener_thread, NULL, server_listener_thread_fn, &server_socket_fd))
   {
