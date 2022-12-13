@@ -20,11 +20,28 @@ file_content_t *init_file_content_empty()
   return file_content;
 }
 
-void add_line(file_content_t *file_content, line_t *new_line)
+// if appending the line, insert index should be -1
+void add_line(file_content_t *file_content, line_t *new_line, size_t insert_line_index)
 {
   file_content->file_content_head = (line_t **)realloc((void *)file_content->file_content_head,
                                                        (file_content->total_line_size + 1) * sizeof(line_t *));
-  file_content->file_content_head[file_content->total_line_size++] = new_line;
+  if (insert_line_index == -1)
+    insert_line_index = file_content->total_line_size;
+  memmove(file_content->file_content_head + insert_line_index + 1,
+          file_content->file_content_head + insert_line_index,
+          (file_content->total_line_size - insert_line_index) * sizeof(line_t *));
+  file_content->total_line_size++;
+  file_content->file_content_head[insert_line_index] = new_line;
+}
+
+void remove_line(file_content_t *file_content, size_t remove_line_index)
+{
+  memmove(file_content->file_content_head + remove_line_index,
+          file_content->file_content_head + remove_line_index + 1,
+          (file_content->total_line_size - remove_line_index - 1) * sizeof(line_t *));
+  file_content->total_line_size--;
+  file_content->file_content_head = (line_t **)realloc((void *)file_content->file_content_head,
+                                                       (file_content->total_line_size) * sizeof(line_t *));
 }
 
 void destroy_file_content(file_content_t *file_content)
@@ -104,7 +121,7 @@ file_content_t *init_file_content_with_text(char *file_text)
   while ((line_text = strsep(&line_sep_ptr, "\n")) != NULL)
   {
     new_line_struct = init_line_with_text(line_text);
-    add_line(file_content, new_line_struct);
+    add_line(file_content, new_line_struct, -1);
   }
   return file_content;
 }
@@ -135,7 +152,7 @@ file_content_t *read_file_to_file_content(FILE *fptr)
     get_line_buffer[read_size - 1] = '\0';
     new_line->text = get_line_buffer;
     get_line_buffer = NULL;
-    add_line(file_content, new_line);
+    add_line(file_content, new_line, -1);
   }
   // when we break out of the loop, we need to free the space allocated for the EOF
   // to avoid memory leaks!
@@ -155,17 +172,12 @@ int main()
   FILE *fptr = open_file_read_mode(file_name);
   file_content_t *file_content = read_file_to_file_content(fptr);
   print_file_content(file_content);
-  printf("%s", "====================\n");
-  char *string = to_string(file_content);
-  printf("content: <%s>\n", string);
-  printf("%s", "====================\n");
-  file_content_t *new_content = init_file_content_with_text(string);
-  print_file_content(new_content);
-  fprintf(fptr, "%s", string);
-
+  line_t *new_line_struct = init_line_with_text("new line is here at 3");
+  add_line(file_content, new_line_struct, 1);
+  print_file_content(file_content);
+  remove_line(file_content, 1);
+  print_file_content(file_content);
   clean_file_system(fptr, file_content);
-  destroy_file_content(new_content);
-  free(string);
 
   return 0;
 }

@@ -4,7 +4,7 @@ typedef struct file_content_struct file_content_t;
 
 line_t *init_line_empty();
 file_content_t *init_file_content_empty();
-void add_line(file_content_t *file_content, line_t *new_line);
+void add_line(file_content_t *file_content, line_t *new_line, size_t line_number);
 void destroy_file_contnt(file_content_t *file_content);
 void print_file_content(file_content_t *file_content);
 line_t *init_line_with_text(char *line_text);
