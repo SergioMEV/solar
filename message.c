@@ -8,25 +8,36 @@
 #include <unistd.h>
 
 // Send a across a socket with a header that includes the message length.
-int send_message(int fd, char* message) {
+int send_message(int fd, char* user_name, char* line_num, char* action, char* message) {
   // If the message is NULL, set errno to EINVAL and return an error
-  if (message == NULL) {
+  if (user_name == NULL || line_num == NULL || action == NULL || message == NULL) {
       errno = EINVAL;
       return -1;
   }
 
+  // Concatinate all inputs to one string variable.
+  char combined_message[strlen(user_name) + strlen(line_num) + strlen(action) + strlen(message) + 4];
+  strcpy(combined_message, line_num);
+  strcat(combined_message, "\n");
+  strcat(combined_message, action);
+  strcat(combined_message, "\n");
+  strcat(combined_message, user_name);
+  strcat(combined_message, "\n");
+  strcat(combined_message, message);
+  strcat(combined_message, "\n");
+
   // First, send the length of the message in a size_t
-  size_t len = strlen(message);
+  size_t len = strlen(combined_message);
   if (write(fd, &len, sizeof(size_t)) != sizeof(size_t)) {
       // Writing failed, so return an error
       return -1;
   }
 
-  // Now we can send the message. Loop until the entire message has been written.
+  // Now we can send the combined_message. Loop until the entire combined_message has been written.
   size_t bytes_written = 0;
   while (bytes_written < len) {
     // Try to write the entire remaining message
-    ssize_t rc = write(fd, message + bytes_written, len - bytes_written);
+    ssize_t rc = write(fd, combined_message + bytes_written, len - bytes_written);
 
     // Did the write fail? If so, return an error
     if (rc <= 0) return -1;
