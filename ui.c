@@ -4,20 +4,22 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include "file.h"
+#include "file_system.c"
+#include <pthread.h>
 
-static FORM *form;
-static FIELD *fields[5];
-//static WINDOW *win_body, *win_form;
-static WINDOW *win_body, *win_form, *DISPLAY, *MISC_BAR;
+static FORM *text_form;
+static FIELD *fields[2];
+
+static WINDOW *TEXT_BODY, *TEXT_FORM_BOX, *DISPLAY, *INSTRUCTIONS_BAR;
 
 int MIN_LINE = 0;
 int MAX_CHARS = 100;
-int CURRENT_LINE = 0;
+int CURRENT_LINE_INDEX = 0;
+char *CURRENT_LINE;
+int TEST_LINE = 0;
 
-/*
- * This is useful because ncurses fill fields blanks with spaces.
- */
+// MISC FUNCTIONS
+
 static char* trim_whitespaces(char *str)
 {
 	char *end;
@@ -41,6 +43,30 @@ static char* trim_whitespaces(char *str)
 	return str;
 }
 
+int print_text(int min_line, file_content_t *file_content) {
+    int display_max_y = ((int) LINES * 0.6) - 2;
+
+    for (size_t line_index = min_line; line_index < display_max_y; line_index++)
+    {
+        if (line_index >= file_content->total_line_size) break;
+
+        // If printing selected line, then highlight else no highlight. NEEDS LOCKS
+        if (line_index == CURRENT_LINE_INDEX) wattron(DISPLAY, A_REVERSE);
+
+        mvwprintw(DISPLAY, (line_index % display_max_y) + 1, 4, "%zu: <%s>\n", line_index, file_content->file_content_head[line_index]->text);
+
+        // Make sure highlight is off
+        wattroff(DISPLAY, A_REVERSE);
+
+        box(DISPLAY, 0, 0);
+        wrefresh(DISPLAY);
+    }
+
+    return 1;
+}
+
+// SETUP FUNCTIONS
+
 void screensetup(void) {
     // Start screen
     initscr();
@@ -50,163 +76,63 @@ void screensetup(void) {
     noecho();
     // Accept keypad input
     keypad(stdscr, TRUE);
-    // Adds CTRL + C option to terminate
+    // Makes it so that we read input char by char
     cbreak();
-
-    MISC_BAR = newwin((int) LINES * 0.7, (int) COLS * 0.2, 2,  (int) COLS * 0.8);
-    if (MISC_BAR == NULL) {
-        perror("Couldn't initialize text box");
-    }
-    
-    box(DISPLAY, 0, 0);
-    box(win_body, 0, 0);
-    box(MISC_BAR, 0, 0);
-
-    wrefresh(DISPLAY);
-    wrefresh(win_body);
-    wrefresh(MISC_BAR);
+    // Sets wait time for input in tenths of seconds
+    halfdelay(2);
 
     refresh();
 }
 
-void driver()
-{
-    int ch, num_chars;
-
-    num_chars = 0;
-    while ((ch = getch()) != KEY_F(1)) {
-        switch (ch) {
-            case '\n':
-            case KEY_ENTER: // Handle inputting line to data structure
-                // Making sure form is up to date
-                form_driver(form, REQ_NEXT_FIELD);
-                form_driver(form, REQ_PREV_FIELD);
-
-
-                mvprintw(0, 0, "%s", trim_whitespaces(field_buffer(fields[0], 0)));
-
-                // int position = 0;
-                // while (position <= num_chars - 1){
-                //     form_driver(form, REQ_NEXT_CHAR);
-                //     position++;
-                // }
-
-                // while (num_chars > 0){
-                //     form_driver(form, REQ_DEL_PREV);
-                //     num_chars--;
-                // }
-                // need to clear buffer after line is submitted
-
-                refresh();
-                pos_form_cursor(form);
-
-                break;
-
-            case KEY_DOWN:
-                if (CURRENT_LINE < 100) CURRENT_LINE ++; // Need to use file->size here LOCKS
-                break;
-
-            case KEY_UP:
-                if(CURRENT_LINE < 0) CURRENT_LINE --; // LOCKS
-                break;
-
-            case KEY_LEFT:
-                form_driver(form, REQ_PREV_CHAR);
-                break;
-
-            case KEY_RIGHT:
-                form_driver(form, REQ_NEXT_CHAR);
-                break;
-
-            case KEY_BACKSPACE:
-                num_chars--;
-                if (num_chars >= MAX_CHARS) continue;
-
-                form_driver(form, REQ_DEL_PREV);
-                break;
-
-            case KEY_DC:
-                form_driver(form, REQ_DEL_CHAR);
-                break;
-
-            default:
-                num_chars++;
-                if (num_chars >= MAX_CHARS) continue;
-
-                form_driver(form, ch);
-                break;
-        }
-
-        wrefresh(win_form);
-    }
-}
-
-void text_box_handler(){
-    win_body = newwin((int) LINES * 0.3, (int) COLS - 1, 2 + (int) LINES * 0.6, 0);
-    if (win_body == NULL) {
+void text_box_setup() {
+    // Text box
+    TEXT_BODY = newwin((int) LINES * 0.3, (int) COLS - 1, 2 + (int) LINES * 0.6, 0);
+    if (TEXT_BODY == NULL) {
         perror("Couldn't initialize text box");
     }
-	assert(win_body != NULL);
-	box(win_body, 0, 0);
-	win_form = derwin(win_body, ((int) LINES * 0.3) - 3, (int) COLS - 3, 2, 1);
-	assert(win_form != NULL);
-	box(win_form, 0, 0);
-	mvwprintw(win_body, 1, 2, "Instructions here");
-	mvwprintw(win_form, 1, 1, "Text:");
+	box(TEXT_BODY, 0, 0);
 
+    // Text form
+	TEXT_FORM_BOX = derwin(TEXT_BODY, ((int) LINES * 0.3) - 3, (int) COLS - 3, 2, 1);
+	if (TEXT_FORM_BOX == NULL) {
+        perror("Couldn't initialize text form");
+    }
+	box(TEXT_FORM_BOX, 0, 0);
+
+    // Instructions and text label
+	mvwprintw(TEXT_BODY, 1, 2, "Choose a line to edit and type new text below.");
+	mvwprintw(TEXT_FORM_BOX, 1, 1, "Text:");
+
+    // Creating fields
 	fields[0] = new_field(1, MAX_CHARS, 5 + (int) LINES * 0.6, 7, 0, 0);
-	fields[1] = NULL;
-	assert(fields[0] != NULL);
-
-	set_field_buffer(fields[0], 0, "");
-
-	set_field_opts(fields[0], O_VISIBLE | O_PUBLIC | O_EDIT | O_ACTIVE);
-
-	form = new_form(fields);
-	assert(form != NULL);
-	set_form_win(form, win_form);
-	set_form_sub(form, derwin(win_form, 18, 76, 1, 1));
-	post_form(form);
-
-	refresh();
-	wrefresh(win_body);
-	wrefresh(win_form);
-    
-	driver();
-
-	unpost_form(form);
-	free_form(form);
-	free_field(fields[0]);
-	delwin(win_form);
-	delwin(win_body);
-}
-
-int print_text(int min_line, int display_max_y, file_content_t *file_content) {
-    char *line_number = (char*)malloc(10 * sizeof(char));
-    // loop through array while line in line_range 
-    int i = MIN_LINE; //MIN_LINE equals smallest line currently visible
-
-    while (i <= display_max_y + MIN_LINE) {
-        // Print number
-        sprintf(line_number, "%d", i);
-        mvwprintw(DISPLAY, i % display_max_y, 1, line_number);
-        
-        // If printing selected line, then highlight else no highlight. NEEDS LOCKS
-        if (i == CURRENT_LINE) wattron(DISPLAY, A_REVERSE);
-
-        // Print line
-        mvwprintw(DISPLAY, i % display_max_y, 4, file_content->file_content_head[i]->text);
-
-        // Make sure highlight is off
-        wattroff(DISPLAY, A_REVERSE);
+    if (fields[0] == NULL) {
+        perror("Couldn't initialize text form field");
     }
 
-    return 1;
+    fields[1] = NULL;
+
+    // Field options
+	set_field_buffer(fields[0], 0, "");
+	set_field_opts(fields[0], O_VISIBLE | O_PUBLIC | O_EDIT | O_ACTIVE);
+    set_max_field(fields[0], MAX_CHARS);
+
+    // Creating form
+	text_form = new_form(fields);
+	if (text_form == NULL) {
+        perror("Couldn't initialize text form field");
+    }
+	set_form_win(text_form, TEXT_FORM_BOX);
+	set_form_sub(text_form, derwin(TEXT_FORM_BOX, 18, 76, 1, 1));
+	post_form(text_form);
+
+	refresh();
+	wrefresh(TEXT_BODY);
+	wrefresh(TEXT_FORM_BOX);
 }
 
-void display_handler(file_content_t *file_content) {
-
-    DISPLAY = newwin((int) LINES * 0.7, (int) COLS * 0.8, 2, 0);
+void display_setup() {
+    //file_content_t* file_content = arg->file_content;
+    DISPLAY = newwin((int) LINES * 0.6, (int) COLS * 0.8, 2, 0);
     if (DISPLAY == NULL) {
         perror("Couldn't initialize text box");
     }
@@ -214,25 +140,226 @@ void display_handler(file_content_t *file_content) {
 
     refresh();
     wrefresh(DISPLAY);
-    
-    int min_line = 0;
-    while(TRUE) {
-        if (CURRENT_LINE > min_line + 10) min_line ++;
+}
 
-        print_text(min_line, 10, file_content); 
-        wrefresh(DISPLAY);
+void instructions_setup() {
+    // Creating window
+    INSTRUCTIONS_BAR = newwin((int) LINES * 0.6, (int) COLS * 0.2 - 3, 2, (int) COLS * 0.8 + 2);
+    if (INSTRUCTIONS_BAR == NULL) {
+        perror("Couldn't initialize text box");
     }
+    box(INSTRUCTIONS_BAR, 0, 0);
+
+    // Writing instructions
+    mvwprintw(INSTRUCTIONS_BAR, 1, 1, "Instructions:");
+
+    mvwprintw(INSTRUCTIONS_BAR, 2, 1, "- Use the arrow keys to select a line and");
+    mvwprintw(INSTRUCTIONS_BAR, 3, 1, "press ENTER to edit it.");
+
+    mvwprintw(INSTRUCTIONS_BAR, 4, 1, "- To insert a new line after the selected");
+    mvwprintw(INSTRUCTIONS_BAR, 5, 1, "line, press 'i'.");
+
+    mvwprintw(INSTRUCTIONS_BAR, 6, 1, "- To delete a selected line, press 'd'.");
+    mvwprintw(INSTRUCTIONS_BAR, 7, 1, "- To append a new line, press 'n'.");
     
+    refresh();
+    wrefresh(INSTRUCTIONS_BAR);
+}
+
+// DRIVERS
+
+bool text_box_driver()
+{
+    int ch, num_chars;
+    num_chars = 0;
+
+    // Add line text to field
+    for (int i = 0; CURRENT_LINE[i] != '\0'; i++){
+        form_driver(text_form, CURRENT_LINE[i]);
+        num_chars++;
+    }
+
+    // Receive user input
+    while ((ch = getch()) != KEY_F(1)) {
+        switch (ch) {
+            case '\n':
+            case KEY_ENTER: // Handle inputting line to data structure
+                // Making sure form is up to date
+                form_driver(text_form, REQ_NEXT_FIELD);
+                form_driver(text_form, REQ_PREV_FIELD);
+
+                mvprintw(TEST_LINE  + 3, COLS * 0.8, "%s", trim_whitespaces(field_buffer(fields[0], 0)));
+                TEST_LINE++;
+
+                int position = 0;
+                while (position <= num_chars - 1){
+                    form_driver(text_form, REQ_NEXT_CHAR);
+                    position++;
+                }
+
+                while (num_chars > 0){
+                    form_driver(text_form, REQ_DEL_PREV);
+                    num_chars--;
+                }
+
+                refresh();
+                pos_form_cursor(text_form);
+                return TRUE;
+
+            case KEY_DOWN:
+                form_driver(text_form, REQ_NEXT_FIELD);
+                break;
+
+            case KEY_UP:
+                form_driver(text_form, REQ_NEXT_FIELD);
+                break;
+
+            case KEY_LEFT:
+                form_driver(text_form, REQ_PREV_CHAR);
+                break;
+
+            case KEY_RIGHT:
+                form_driver(text_form, REQ_NEXT_CHAR);
+                break;
+
+            case KEY_BACKSPACE:
+                num_chars--;
+                if (num_chars >= MAX_CHARS) continue;
+
+                form_driver(text_form, REQ_DEL_PREV);
+                break;
+
+            case KEY_DC:
+                form_driver(text_form, REQ_DEL_CHAR);
+                break;
+
+            default:
+                num_chars++;
+                if (num_chars >= MAX_CHARS) continue;
+
+                form_driver(text_form, ch);
+                break;
+        }
+
+        wrefresh(TEXT_FORM_BOX);
+    }
+
+    return FALSE;
+}
+
+void line_selection_driver(int ch, int max_line) {
+    switch(ch) {
+        case 'r':
+            return;
+        case '\n':
+            // Select line and send message selection
+            return;
+        case KEY_UP:
+            CURRENT_LINE_INDEX = (CURRENT_LINE_INDEX == 0) ? CURRENT_LINE_INDEX : CURRENT_LINE_INDEX - 1;
+            break;
+        case KEY_DOWN:
+            CURRENT_LINE_INDEX = (CURRENT_LINE_INDEX + 1 == max_line) ? CURRENT_LINE_INDEX : CURRENT_LINE_INDEX + 1;
+            break;
+        default:
+            break;
+    }
+}
+
+bool display_driver(file_content_t *file_content) {
+    int ch;
+    int min_line = 0;
+    while (TRUE) {
+
+        while((ch = getch()) == ERR){
+            // Print text to display
+            if (CURRENT_LINE_INDEX > min_line + 10) min_line ++;
+            print_text(min_line, file_content); 
+        }
+
+        // Listen for user input (line selection)
+        line_selection_driver(ch, file_content->total_line_size);
+        
+        // Refresh display
+        wrefresh(DISPLAY); 
+
+        // Handle display input exit
+        if (ch == '\n') {
+            // Set CURRENT_LINE for display
+            CURRENT_LINE = file_content->file_content_head[CURRENT_LINE_INDEX]->text;
+            return TRUE;
+        } else if (ch == KEY_F(1)) {
+            return FALSE;
+        }
+    };
+}
+
+void ui_driver(file_content_t *file_content){
+    while (TRUE) {
+        if(!display_driver(file_content)) return;
+	    if(!text_box_driver()) return;
+    }
+}
+
+
+// CLEANING FUNCTIONS
+
+void free_ui() {
+    // Free text box elements
+    unpost_form(text_form);
+	free_form(text_form);
+	free_field(fields[0]);
+	delwin(TEXT_FORM_BOX);
+	delwin(TEXT_BODY);
+
+    // Free display
     delwin(DISPLAY);
+
+    // Free stdscreen
+    endwin();
+}
+
+// MAIN THREAD FUNCTION
+
+void*  ui_thread_handler(void *args) {
+    file_content_t *file_content = (file_content_t *) args;
+
+    // Setup of UI elements
+    screensetup();
+
+    display_setup();
+    text_box_setup();
+    instructions_setup();
+    
+    // Titles
+    mvprintw(1, 2, "Solar!");
+    mvprintw(1, COLS * 0.82, "Your mother's favorite text editor!");
+
+    // Driver that controls user interaction
+    ui_driver(file_content);
+
+    // Freeing elements of UI
+    free_ui();
+
+    return NULL;
 }
 
 int main()
 {
-	screensetup();
-    // text_box_handler(); // has to be in a thread
-    // display_handler(); // has to be in a thread
+	pthread_t ui_thread;
+    char *file_name = "Archive/f1.txt";
+    FILE *fptr = open_file_append_mode(file_name);
+    file_content_t *file_content = read_file_to_file_content(fptr);
 
-	endwin();
 
-	return 0;
+    if (pthread_create(&ui_thread, NULL, ui_thread_handler, (void *) file_content)) {
+        perror("Couldn't create display thread:");
+        exit(2);
+    }
+
+
+    if (pthread_join(ui_thread, NULL)) {
+        perror("Couldn't join display thread");
+        exit(2);
+    }
+
 }
