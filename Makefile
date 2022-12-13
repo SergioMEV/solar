@@ -12,8 +12,9 @@ ui: ui.c
 file_system: file_system.c 
 	$(CC) $(CFLAGS) -o file_system file_system.c -fsanitize=address
 
-server: server.c message.h message.c socket.h
-	$(CC) $(CFLAGS) -o server server.c message.c -lpthread
+server: server.c message.h message.c socket.h user_info_utils.h user_info_utils.c
+	$(CC) $(CFLAGS) -o server server.c message.c user_info_utils.c -lpthread -fsanitize=address
 
 client: client.c message.h message.c
-	$(CC) $(CFLAGS) -o client client.c message.c -lpthread
+	$(CC) $(CFLAGS) -o client client.c message.c -lpthread -fsanitize=address
+
