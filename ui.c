@@ -100,7 +100,7 @@ void text_box_setup() {
 	box(TEXT_FORM_BOX, 0, 0);
 
     // Instructions and text label
-	mvwprintw(TEXT_BODY, 1, 2, "ENTER: Modify line.    i: Insert line at index.    d: Delete line at index.    n: Append new line to end of file.  UP/DOWN Arrows: Scroll through lines.");
+	mvwprintw(TEXT_BODY, 1, 2, "ENTER: Modify line.    i: Insert line at index.    d: Delete line at index.    n: Append new line to end of file.  UP/DOWN Arrows: Scroll through lines.    F1: Exit.");
 	mvwprintw(TEXT_FORM_BOX, 1, 1, "Text:");
 
     // Creating fields
@@ -151,16 +151,16 @@ void instructions_setup() {
     box(INSTRUCTIONS_BAR, 0, 0);
 
     // Writing instructions
-    mvwprintw(INSTRUCTIONS_BAR, 1, 1, "Instructions:");
+    // mvwprintw(INSTRUCTIONS_BAR, 1, 1, "Instructions:");
 
-    mvwprintw(INSTRUCTIONS_BAR, 2, 1, "- Use the arrow keys to select a line and");
-    mvwprintw(INSTRUCTIONS_BAR, 3, 1, "press ENTER to edit it.");
+    // mvwprintw(INSTRUCTIONS_BAR, 2, 1, "- Use the arrow keys to select a line and");
+    // mvwprintw(INSTRUCTIONS_BAR, 3, 1, "press ENTER to edit it.");
 
-    mvwprintw(INSTRUCTIONS_BAR, 4, 1, "- To insert a new line at the selected");
-    mvwprintw(INSTRUCTIONS_BAR, 5, 1, "index, press 'i'.");
+    // mvwprintw(INSTRUCTIONS_BAR, 4, 1, "- To insert a new line at the selected");
+    // mvwprintw(INSTRUCTIONS_BAR, 5, 1, "index, press 'i'.");
 
-    mvwprintw(INSTRUCTIONS_BAR, 6, 1, "- To delete a selected line, press 'd'.");
-    mvwprintw(INSTRUCTIONS_BAR, 7, 1, "- To append a new line, press 'n'.");
+    // mvwprintw(INSTRUCTIONS_BAR, 6, 1, "- To delete a selected line, press 'd'.");
+    // mvwprintw(INSTRUCTIONS_BAR, 7, 1, "- To append a new line, press 'n'.");
     
     refresh();
     wrefresh(INSTRUCTIONS_BAR);
