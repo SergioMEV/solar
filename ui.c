@@ -16,7 +16,6 @@ int MIN_LINE = 0;
 int MAX_CHARS = 100;
 int CURRENT_LINE_INDEX = 0;
 char *CURRENT_LINE;
-int TEST_LINE = 0;
 
 // MISC FUNCTIONS
 
@@ -168,11 +167,10 @@ void instructions_setup() {
 
 // DRIVERS
 
-bool text_box_driver()
+bool text_box_driver(file_content_t *file_content)
 {
     int ch, num_chars;
-    num_chars = 0;
-
+    num_chars = 0; 
     // Add line text to field
     for (int i = 0; CURRENT_LINE[i] != '\0'; i++){
         form_driver(text_form, CURRENT_LINE[i]);
@@ -188,22 +186,24 @@ bool text_box_driver()
                 form_driver(text_form, REQ_NEXT_FIELD);
                 form_driver(text_form, REQ_PREV_FIELD);
 
-                mvprintw(TEST_LINE  + 3, COLS * 0.8, "%s", trim_whitespaces(field_buffer(fields[0], 0)));
-                TEST_LINE++;
+                // Append line to file content at current line 
+                // add_line(file_content, trim_whitespaces(field_buffer(fields[0], 0)), CURRENT_LINE);
 
-                int position = 0;
-                while (position <= num_chars - 1){
+                // Send line message to server
+
+                // Clearing form
+                for (int position = 0; position <= num_chars - 1; position ++){
                     form_driver(text_form, REQ_NEXT_CHAR);
-                    position++;
                 }
-
                 while (num_chars > 0){
                     form_driver(text_form, REQ_DEL_PREV);
                     num_chars--;
                 }
 
+                // Refreshing screen and resetting cursor
                 refresh();
                 pos_form_cursor(text_form);
+
                 return TRUE;
 
             case KEY_DOWN:
@@ -249,25 +249,34 @@ bool text_box_driver()
 
 void line_selection_driver(int ch, int max_line) {
     switch(ch) {
-        case 'r':
+        // Action keys
+        case 'd': // Delete line
+            // Create query
+
+            // Send message
+
+            // Return to loop
             return;
-        case '\n':
-            // Select line and send message selection
+        case 'n': // Append line
+            // Update current line index
+            CURRENT_LINE_INDEX = max_line + 1;
             return;
+        case 'r': // Refresh
+            return;
+        // Arrow keys
         case KEY_UP:
             CURRENT_LINE_INDEX = (CURRENT_LINE_INDEX == 0) ? CURRENT_LINE_INDEX : CURRENT_LINE_INDEX - 1;
             break;
         case KEY_DOWN:
             CURRENT_LINE_INDEX = (CURRENT_LINE_INDEX + 1 == max_line) ? CURRENT_LINE_INDEX : CURRENT_LINE_INDEX + 1;
             break;
-        default:
-            break;
     }
 }
 
 bool display_driver(file_content_t *file_content) {
     int ch;
-    int min_line = 0;
+    int min_line = 0; 
+
     while (TRUE) {
 
         while((ch = getch()) == ERR){
@@ -277,26 +286,29 @@ bool display_driver(file_content_t *file_content) {
         }
 
         // Listen for user input (line selection)
-        line_selection_driver(ch, file_content->total_line_size);
+        line_selection_driver(ch, file_content->total_line_size - 1);
         
         // Refresh display
         wrefresh(DISPLAY); 
 
         // Handle display input exit
-        if (ch == '\n') {
+        if (ch == '\n') { // Selected a line to modify
             // Set CURRENT_LINE for display
             CURRENT_LINE = file_content->file_content_head[CURRENT_LINE_INDEX]->text;
             return TRUE;
-        } else if (ch == KEY_F(1)) {
+        } else if (ch == 'n') { // Appending new line to file
+            CURRENT_LINE = "";
+            return TRUE;
+        } else if (ch == KEY_F(1)) { // Exiting program
             return FALSE;
-        }
+        } 
     };
 }
 
 void ui_driver(file_content_t *file_content){
     while (TRUE) {
         if(!display_driver(file_content)) return;
-	    if(!text_box_driver()) return;
+	    if(!text_box_driver(file_content)) return;
     }
 }
 
