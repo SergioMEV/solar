@@ -11,6 +11,7 @@
 #include "file_system.h"
 #include "error_codes.h"
 #include "constants.h"
+#include "query_util.h"
 
 // user information (fd and username)
 user_infos_array_t *user_infos_struct;
