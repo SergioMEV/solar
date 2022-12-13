@@ -1,11 +1,9 @@
-#include "query_util.h"
 #include "constants.h"
+#include "query_util.h"
 
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 // Concatinate all inputs to one string variable.
 char* string_concatenate(char* user_name, char* line_num, char action, char* message) {
@@ -16,6 +14,7 @@ char* string_concatenate(char* user_name, char* line_num, char action, char* mes
   strcat(combined_message, SEPERATOR);
   strcat(combined_message, user_name);
   strcat(combined_message, SEPERATOR);
+  // Don't include the message if the action is to delete.
   if (action != ACTION_DELETE) {
     strcat(combined_message, message);
     strcat(combined_message, SEPERATOR);
