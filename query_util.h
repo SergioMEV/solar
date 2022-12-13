@@ -2,5 +2,5 @@
 
 #define SEPERATOR "\n"
 
-// Concatenates input strings to one string
+// Concatenates all inputs to one string variable.
 char* string_concatenate(int fd, char* user_name, char* line_num, char* action, char* message);
