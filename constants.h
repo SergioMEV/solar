@@ -1,1 +1,6 @@
 #define MAX_FILE_NAME_LENGTH 20
+#define ACTION_DELETE 'D'
+#define ACTION_INSERT 'I'
+#define ACTION_APPEND 'A'
+#define ACTION_MODIFY 'M'
+#define MAX_CHARS 100
