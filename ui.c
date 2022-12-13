@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include "file_system.c"
+#include "constants.h"
 #include <pthread.h>
 
 static FORM *text_form;
@@ -12,10 +13,10 @@ static FIELD *fields[2];
 
 static WINDOW *TEXT_BODY, *TEXT_FORM_BOX, *DISPLAY, *INSTRUCTIONS_BAR;
 
-int MIN_LINE = 0;
-int MAX_CHARS = 100;
 int CURRENT_LINE_INDEX = 0;
-char *CURRENT_LINE;
+int CURRENT_ACTION;
+
+char *CURRENT_LINE; 
 
 // MISC FUNCTIONS
 
@@ -42,17 +43,17 @@ static char* trim_whitespaces(char *str)
 	return str;
 }
 
-int print_text(int min_line, file_content_t *file_content) {
-    int display_max_y = ((int) LINES * 0.6) - 2;
+int print_text(int min_line, int display_max_y, file_content_t *file_content) {
+    werase(DISPLAY);
 
-    for (size_t line_index = min_line; line_index < display_max_y; line_index++)
+    for (size_t line_index = min_line; line_index < (display_max_y + min_line); line_index++)
     {
-        if (line_index >= file_content->total_line_size) break;
+        if (line_index >= (file_content->total_line_size)) break;
 
         // If printing selected line, then highlight else no highlight. NEEDS LOCKS
         if (line_index == CURRENT_LINE_INDEX) wattron(DISPLAY, A_REVERSE);
 
-        mvwprintw(DISPLAY, (line_index % display_max_y) + 1, 4, "%zu: <%s>\n", line_index, file_content->file_content_head[line_index]->text);
+        mvwprintw(DISPLAY, (line_index - min_line) + 1, 4, "%zu: %s\n", line_index, file_content->file_content_head[line_index]->text);
 
         // Make sure highlight is off
         wattroff(DISPLAY, A_REVERSE);
@@ -99,11 +100,11 @@ void text_box_setup() {
 	box(TEXT_FORM_BOX, 0, 0);
 
     // Instructions and text label
-	mvwprintw(TEXT_BODY, 1, 2, "Choose a line to edit and type new text below.");
+	mvwprintw(TEXT_BODY, 1, 2, "ENTER: Modify line.    i: Insert line at index.    d: Delete line at index.    n: Append new line to end of file.  UP/DOWN Arrows: Scroll through lines.");
 	mvwprintw(TEXT_FORM_BOX, 1, 1, "Text:");
 
     // Creating fields
-	fields[0] = new_field(1, MAX_CHARS, 5 + (int) LINES * 0.6, 7, 0, 0);
+	fields[0] = new_field(1, MAX_CHARS, 5 + (int) LINES * 0.6, 8, 0, 0);
     if (fields[0] == NULL) {
         perror("Couldn't initialize text form field");
     }
@@ -155,8 +156,8 @@ void instructions_setup() {
     mvwprintw(INSTRUCTIONS_BAR, 2, 1, "- Use the arrow keys to select a line and");
     mvwprintw(INSTRUCTIONS_BAR, 3, 1, "press ENTER to edit it.");
 
-    mvwprintw(INSTRUCTIONS_BAR, 4, 1, "- To insert a new line after the selected");
-    mvwprintw(INSTRUCTIONS_BAR, 5, 1, "line, press 'i'.");
+    mvwprintw(INSTRUCTIONS_BAR, 4, 1, "- To insert a new line at the selected");
+    mvwprintw(INSTRUCTIONS_BAR, 5, 1, "index, press 'i'.");
 
     mvwprintw(INSTRUCTIONS_BAR, 6, 1, "- To delete a selected line, press 'd'.");
     mvwprintw(INSTRUCTIONS_BAR, 7, 1, "- To append a new line, press 'n'.");
@@ -187,12 +188,18 @@ bool text_box_driver(file_content_t *file_content)
                 form_driver(text_form, REQ_PREV_FIELD);
 
                 // Append line to file content at current line 
-                // add_line(file_content, trim_whitespaces(field_buffer(fields[0], 0)), CURRENT_LINE);
+                line_t *line = init_line_with_text(trim_whitespaces(field_buffer(fields[0], 0)));
+
+                // If we are modifying a line, delete the original line
+                if (CURRENT_ACTION == ACTION_MODIFY) remove_line(file_content, CURRENT_LINE_INDEX);   
+                // Add line to file_content             
+                add_line(file_content, line, CURRENT_LINE_INDEX);
 
                 // Send line message to server
+                //string_concatenate(username, CURRENT_LINE, CURRENT_ACTION, trim_whitespaces(field_buffer(fields[0], 0)));
 
                 // Clearing form
-                for (int position = 0; position <= num_chars - 1; position ++){
+                for (int position = 0; position <= num_chars - 1; position++){
                     form_driver(text_form, REQ_NEXT_CHAR);
                 }
                 while (num_chars > 0){
@@ -247,28 +254,48 @@ bool text_box_driver(file_content_t *file_content)
     return FALSE;
 }
 
-void line_selection_driver(int ch, int max_line) {
+void line_selection_driver(file_content_t *file_content, int ch, int max_line) {
     switch(ch) {
         // Action keys
-        case 'd': // Delete line
+        case '\n':
+            // Modify line
+            CURRENT_ACTION = ACTION_MODIFY;
+            return;
+        case 'd': 
+            // Delete line
+            CURRENT_ACTION = ACTION_DELETE;
+            // Delete from local file content
+            if (max_line >= 0) remove_line(file_content, CURRENT_LINE_INDEX);            
+            if (CURRENT_LINE_INDEX == max_line) CURRENT_LINE--; 
+            
             // Create query
+            // string_concatenate(username, CURRENT_LINE, CURRENT_ACTION, "");
 
             // Send message
+            // send_message()
 
-            // Return to loop
             return;
-        case 'n': // Append line
+        case 'n': 
+            // Append line
+            CURRENT_ACTION = ACTION_APPEND;
             // Update current line index
             CURRENT_LINE_INDEX = max_line + 1;
             return;
-        case 'r': // Refresh
+        case 'i':
+            // Insert line
+            CURRENT_ACTION = ACTION_INSERT;
+            // Set current line to next line 
+            CURRENT_LINE++;
+            return;
+        case 'r': 
+            // Refresh
             return;
         // Arrow keys
         case KEY_UP:
             CURRENT_LINE_INDEX = (CURRENT_LINE_INDEX == 0) ? CURRENT_LINE_INDEX : CURRENT_LINE_INDEX - 1;
             break;
         case KEY_DOWN:
-            CURRENT_LINE_INDEX = (CURRENT_LINE_INDEX + 1 == max_line) ? CURRENT_LINE_INDEX : CURRENT_LINE_INDEX + 1;
+            CURRENT_LINE_INDEX = (CURRENT_LINE_INDEX == max_line) ? CURRENT_LINE_INDEX : CURRENT_LINE_INDEX + 1;
             break;
     }
 }
@@ -276,17 +303,23 @@ void line_selection_driver(int ch, int max_line) {
 bool display_driver(file_content_t *file_content) {
     int ch;
     int min_line = 0; 
+    int display_max_y = ((int) LINES * 0.6) - 2;
 
     while (TRUE) {
 
         while((ch = getch()) == ERR){
             // Print text to display
-            if (CURRENT_LINE_INDEX > min_line + 10) min_line ++;
-            print_text(min_line, file_content); 
+            if (CURRENT_LINE_INDEX >= min_line + display_max_y ) { 
+                min_line++;
+            } else if (CURRENT_LINE_INDEX < min_line) {
+                min_line--;
+            }
+
+            print_text(min_line, display_max_y, file_content); 
         }
 
         // Listen for user input (line selection)
-        line_selection_driver(ch, file_content->total_line_size - 1);
+        line_selection_driver( file_content,ch, file_content->total_line_size - 1);
         
         // Refresh display
         wrefresh(DISPLAY); 
@@ -296,7 +329,7 @@ bool display_driver(file_content_t *file_content) {
             // Set CURRENT_LINE for display
             CURRENT_LINE = file_content->file_content_head[CURRENT_LINE_INDEX]->text;
             return TRUE;
-        } else if (ch == 'n') { // Appending new line to file
+        } else if (ch == 'n' || ch == 'i') { // Appending new line to file
             CURRENT_LINE = "";
             return TRUE;
         } else if (ch == KEY_F(1)) { // Exiting program
@@ -359,9 +392,8 @@ int main()
 {
 	pthread_t ui_thread;
     char *file_name = "Archive/f1.txt";
-    FILE *fptr = open_file_append_mode(file_name);
+    FILE *fptr = open_file_read_mode(file_name);
     file_content_t *file_content = read_file_to_file_content(fptr);
-
 
     if (pthread_create(&ui_thread, NULL, ui_thread_handler, (void *) file_content)) {
         perror("Couldn't create display thread:");
@@ -373,5 +405,4 @@ int main()
         perror("Couldn't join display thread");
         exit(2);
     }
-
 }
