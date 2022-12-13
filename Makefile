@@ -12,11 +12,11 @@ ui: ui.c
 file_system: file_system.c 
 	$(CC) $(CFLAGS) -o file_system file_system.c -fsanitize=address
 
-server: server.c message.h message.c socket.h user_info_utils.h user_info_utils.c file_system.h file_system.h file.h error_codes.h constants.h
-	$(CC) $(CFLAGS) -o server server.c message.c user_info_utils.c file_system.c -lpthread -fsanitize=address
+server: server.c message.h message.c socket.h user_info_utils.h user_info_utils.c file_system.h file_system.h file.h error_codes.h constants.h query_util.h query_util.c
+	$(CC) $(CFLAGS) -o server server.c message.c user_info_utils.c file_system.c query_util.c -lpthread -fsanitize=address
 
-client: client.c message.h message.c
-	$(CC) $(CFLAGS) -o client client.c message.c -lpthread -fsanitize=address
+client: client.c message.h message.c query_util.h query_util.c
+	$(CC) $(CFLAGS) -o client client.c message.c query_util.c -lpthread -fsanitize=address
 
 main: main.c 
 	$(CC) $(CFLAGS) -o main main.c -lncurses -lform -lpthread -fsanitize=address

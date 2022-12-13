@@ -7,6 +7,7 @@
 #include "message.h"
 #include "socket.h"
 #include "error_codes.h"
+#include "query_util.h"
 
 #define MAX_USERNAME_LENGTH 20
 
