@@ -7,71 +7,52 @@
 
 #include "message.h"
 #include "socket.h"
+#include "user_info_utils.h"
+#include "file_system.h"
+#include "error_codes.h"
+#include "constants.h"
+#include "query_util.h"
 
-// Dynamic array to store socket_fds
-int *clients = NULL;
-// Number of clients
-int num_clients = 0;
+// user information (fd and username)
+user_infos_array_t *user_infos_struct;
 
-void *client_listener_thread(void *client_socket_fd_void)
+void *client_listener_thread(void *user_info_void)
 {
-  int client_socket_fd = *(int *)client_socket_fd_void;
+  user_info_t *user_info = (user_info_t *)user_info_void;
   char *message;
   // Read a message from the client & send a message to the client
-  do
+  while (1)
   {
-    message = receive_message(client_socket_fd);
-    if (message == NULL)
+    // one of the client is dead, remove it
+    if ((message = receive_message(user_info->fd)) == NULL)
     {
-      int counter = 0;
-      for (int i = 0; i < num_clients; i++)
-      {
-        if (clients[i] == client_socket_fd)
-        {
-          break;
-        }
-        counter++;
-      }
-      for (int i = counter; i < num_clients - 1; i++)
-      {
-        clients[i] = clients[i + 1];
-      }
-      num_clients--;
-      clients = (int *)realloc(clients, sizeof(int) * num_clients);
-      return NULL;
-    }
-
-    if (strcmp(message, "quit\n") == 0)
-    {
-      printf("Client exited\n");
+      user_infos_remove_user(user_infos_struct, user_info);
+      printf("User <%s> leaves the session, remaininng number of users: %zu\n", user_info->user_name, user_infos_struct->size);
       break;
     }
 
-    printf("client: %s", message);
+    printf("User <%s>: %s", user_info->user_name, message);
     // Sending message to clients in the network
-    for (int i = 0; i < num_clients; i++)
+    for (int index = 0; index < user_infos_struct->size; index++)
     {
       // Skip if socket_fd is the same
-      if (clients[i] == client_socket_fd)
+      if (user_infos_struct->user_infos[index] == user_info)
       {
         continue;
       }
 
-      if (send_message(clients[i], message) == -1)
+      if (send_message(user_infos_struct->user_infos[index]->fd, message) == -1)
       {
         perror("Failed to send message to client");
         exit(EXIT_FAILURE);
       }
     }
-    free(message);
-  } while (1);
-
-  // Print the message
-  printf("Client sent: %s\n", message);
+  }
   // Free the message string
   free(message);
   // Close socket
-  close(client_socket_fd);
+  close(user_info->fd);
+  user_info_destroy(user_info);
 
   return NULL;
 }
@@ -93,8 +74,18 @@ int main()
     perror("listen failed");
     exit(EXIT_FAILURE);
   }
-
   printf("Server listening on port %u\n", port);
+
+  user_infos_struct = user_infos_array_init();
+
+  // TODO: make file name a user input
+  char *file_name = malloc(sizeof(char) * MAX_FILE_NAME_LENGTH);
+  strcpy(file_name, "Archive/f1.txt");
+  FILE *fptr = open_file_append_mode(file_name);
+  free(file_name);
+  file_content_t *file_content = read_file_to_file_content(fptr);
+  print_file_content(file_content);
+  clean_file_system(fptr, file_content);
 
   while (1)
   {
@@ -106,21 +97,46 @@ int main()
       exit(EXIT_FAILURE);
     }
 
-    printf("Client connected!\n");
+    char *user_name = receive_message(client_socket_fd);
+    if (is_duplicate_user_name(user_infos_struct, user_name))
+    {
+      printf("Rejected connection from user <%s> because of duplicate user name\n", user_name);
+      // duplicate user name detected
+      if (send_message(client_socket_fd, ERROR_CODE_DUPLICATE_USER_NAME) == -1)
+      {
+        perror("Failed to terminate client connection.");
+        exit(EXIT_FAILURE);
+      }
+      continue;
+    }
+    else
+    {
+      if (send_message(client_socket_fd, SUCCESS_CODE_CONNECTION_SUCCESS) == -1)
+      {
+        perror("Failed to terminate client connection.");
+        exit(EXIT_FAILURE);
+      }
+    }
 
-    // Save client's information
-    clients = (int *)realloc(clients, sizeof(int) * (num_clients + 1));
-    clients[num_clients++] = client_socket_fd;
+    // Create a user info struct for the new user
+    user_info_t *user_info = user_infos_init();
+    user_info->user_name = user_name;
+    user_info->fd = client_socket_fd;
+
+    user_infos_add_user(user_infos_struct, user_info);
+
+    printf("User <%s> joined the session! Current number of users: %zu\n", user_name, user_infos_struct->size);
 
     // Create a thread to receive and send messages to peers
     pthread_t server_thread;
-    if (pthread_create(&server_thread, NULL, &client_listener_thread, &client_socket_fd))
+    if (pthread_create(&server_thread, NULL, &client_listener_thread, (void *)user_info))
     {
-      perror("pthread_create failed");
+      perror("Createing thread for client listner failed");
       exit(EXIT_FAILURE);
     }
   }
 
+  user_infos_array_destroy(user_infos_struct);
   // Close sockets
   close(server_socket_fd);
 

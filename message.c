@@ -1,4 +1,5 @@
 #include "message.h"
+#include "query_util.h"
 
 #include <errno.h>
 #include <stdint.h>
