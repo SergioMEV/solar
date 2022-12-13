@@ -1,5 +1,6 @@
 #include "message.h"
 #include "query_util.h"
+#include "client.c"
 
 #include <errno.h>
 #include <stdint.h>
@@ -14,6 +15,11 @@ int send_message(int fd, char* message) {
   if (message == NULL) {
     errno = EINVAL;
     return -1;
+  }
+
+  // If fd is 0, assign the server socket fd.
+  if (fd == 0) {
+    fd = server_socket_fd;
   }
 
   // First, send the length of the message in a size_t
