@@ -12,15 +12,15 @@
 int send_message(int fd, char* message) {
   // If the message is NULL, set errno to EINVAL and return an error
   if (message == NULL) {
-      errno = EINVAL;
-      return -1;
+    errno = EINVAL;
+    return -1;
   }
 
   // First, send the length of the message in a size_t
   size_t len = strlen(message);
   if (write(fd, &len, sizeof(size_t)) != sizeof(size_t)) {
-      // Writing failed, so return an error
-      return -1;
+    // Writing failed, so return an error
+    return -1;
   }
 
   // Now we can send the message. Loop until the entire message has been written.
