@@ -12,6 +12,7 @@
 #define MAX_USERNAME_LENGTH 20
 
 char *username;
+int server_socket_fd;
 
 void *server_listener_thread_fn(void *server_socket_fd_void)
 {
@@ -47,7 +48,7 @@ int main(int argc, char **argv)
   strcpy(username, argv[3]);
 
   // Connect to the server
-  int server_socket_fd = socket_connect(server_name, port);
+  server_socket_fd = socket_connect(server_name, port);
   if (server_socket_fd == -1)
   {
     perror("Failed to connect");
