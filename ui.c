@@ -215,10 +215,13 @@ bool text_box_driver(file_content_t *file_content)
                 if (CURRENT_ACTION == ACTION_MODIFY) remove_line(file_content, CURRENT_LINE_INDEX);   
                 // Add line to file_content             
                 add_line(file_content, line, CURRENT_LINE_INDEX);
+                //process_query(file_content, username, CURRENT_LINE_INDEX, trim_whitespaces(field_buffer(fields[0], 0)))
 
                 // Send line message to server
-                //string_concatenate(username, CURRENT_LINE, CURRENT_ACTION, trim_whitespaces(field_buffer(fields[0], 0)));
-
+                // char *query = query_constructor(username, CURRENT_LINE_INDEX, CURRENT_ACTION, trim_whitespaces(field_buffer(fields[0], 0)));
+                // send_message(file_content->server_fd, query);
+                // free(query);
+                
                 // Clearing form
                 for (int position = 0; position <= num_chars - 1; position++){
                     form_driver(text_form, REQ_NEXT_CHAR);
@@ -286,17 +289,16 @@ void line_selection_driver(file_content_t *file_content, int ch, int max_line) {
             // Delete line
             CURRENT_ACTION = ACTION_DELETE;
             // Delete from local file content
-            if (max_line >= 0) remove_line(file_content, CURRENT_LINE_INDEX);            
+            if (max_line >= 0) remove_line(file_content, CURRENT_LINE_INDEX);   
+            // if (max_line >= 0) process_query(file_content, username, CURRENT_LINE_INDEX, " ")
             if (CURRENT_LINE_INDEX == max_line) CURRENT_LINE--; 
             
-            // Create query
-            // string_concatenate(username, CURRENT_LINE, CURRENT_ACTION, "");
-
-            // Send message
-            // send_message()
-
+            // Send line message to server
+            // char *query = string_concatenate(username, CURRENT_LINE_INDEX, CURRENT_ACTION, "Dummy message");
+            // send_message(file_content->server_fd, query);
             return;
-        case 'n': 
+
+        case 'a': 
             // Append line
             CURRENT_ACTION = ACTION_APPEND;
             // Update current line index
