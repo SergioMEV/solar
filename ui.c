@@ -8,7 +8,6 @@
 #include "constants.h"
 #include "query_util.h"
 #include "message.h"
-#include "client.c"
 #include <pthread.h>
 
 static FORM *text_form;
@@ -233,10 +232,10 @@ bool text_box_driver(file_content_t *file_content)
             form_driver(text_form, REQ_PREV_FIELD);
 
             // Make changes
-            process_query(file_content, username, CURRENT_LINE, CURRENT_ACTION, trim_whitespaces(field_buffer(fields[0], 0)));
+            process_query(file_content, file_content->user_name, CURRENT_LINE_INDEX, CURRENT_ACTION, trim_whitespaces(field_buffer(fields[0], 0)));
 
             // Send line message to server
-            char *query = query_constructor(username, CURRENT_LINE, CURRENT_ACTION, trim_whitespaces(field_buffer(fields[0], 0)));
+            char *query = query_constructor(file_content->user_name, CURRENT_LINE_INDEX, CURRENT_ACTION, trim_whitespaces(field_buffer(fields[0], 0)));
             send_message(file_content->server_fd, query);
             free(query);
 
@@ -315,15 +314,15 @@ void line_selection_driver(file_content_t *file_content, int ch, int max_line)
 
         // Delete from local file content
         if (max_line >= 0)
-            process_query(file_content, username, CURRENT_LINE, CURRENT_ACTION, trim_whitespaces(field_buffer(fields[0], 0)));
+            process_query(file_content, file_content->user_name, CURRENT_LINE_INDEX, CURRENT_ACTION, trim_whitespaces(field_buffer(fields[0], 0)));
 
         // Send line message to server
-        char *query = query_constructor(username, CURRENT_LINE, CURRENT_ACTION, " ");
+        char *query = query_constructor(file_content->user_name, CURRENT_LINE_INDEX, CURRENT_ACTION, " ");
         send_message(file_content->server_fd, query);
         free(query);
 
         if (CURRENT_LINE_INDEX == max_line)
-            CURRENT_LINE--;
+            CURRENT_LINE_INDEX--;
 
         return;
     case 'n':
@@ -336,7 +335,7 @@ void line_selection_driver(file_content_t *file_content, int ch, int max_line)
         // Insert line
         CURRENT_ACTION = ACTION_INSERT;
         // Set current line to next line
-        CURRENT_LINE++;
+        CURRENT_LINE_INDEX++;
         return;
     case 'r':
         // Refresh
@@ -465,7 +464,7 @@ int main()
     pthread_t ui_thread;
     char *file_name = "Archive/f1.txt";
     FILE *fptr = open_file_read_mode(file_name);
-    file_content_t *file_content = read_file_to_file_content(fptr);
+    file_content_t *file_content = init_file_content_with_file(file_name, 0, fptr);
 
     if (pthread_create(&ui_thread, NULL, ui_thread_handler, (void *)file_content))
     {
