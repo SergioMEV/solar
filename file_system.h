@@ -15,3 +15,4 @@ FILE *open_file_read_mode(char *file_name);
 file_content_t *init_file_content_with_file(char *file_name, int server_fd, FILE *fptr);
 void clean_file_system(FILE *fptr, file_content_t *file_content);
 void export_file_content(char *file_name, file_content_t *file_content);
+void process_query(file_content_t *file_content, char *user_name, int line_index, char action, char *modified_line_text);
