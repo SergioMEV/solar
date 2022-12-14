@@ -466,15 +466,15 @@ int main()
     FILE *fptr = open_file_read_mode(file_name);
     file_content_t *file_content = init_file_content_with_file(file_name, 0, fptr);
 
-    if (pthread_create(&ui_thread, NULL, ui_thread_handler, (void *)file_content))
-    {
-        perror("Couldn't create display thread:");
-        exit(2);
-    }
+//     if (pthread_create(&ui_thread, NULL, ui_thread_handler, (void *)file_content))
+//     {
+//         perror("Couldn't create display thread:");
+//         exit(2);
+//     }
 
-    if (pthread_join(ui_thread, NULL))
-    {
-        perror("Couldn't join display thread");
-        exit(2);
-    }
-}
+//     if (pthread_join(ui_thread, NULL))
+//     {
+//         perror("Couldn't join display thread");
+//         exit(2);
+//     }
+// }
