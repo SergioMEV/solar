@@ -31,9 +31,11 @@ line_t *init_line_empty()
  * @param void
  * @return file_content_t*
  ******************************************************************************/
-file_content_t *init_file_content_empty()
+file_content_t *init_file_content_empty(char *file_name)
 {
   file_content_t *file_content = (file_content_t *)malloc(sizeof(file_content_t));
+  file_content->file_name = malloc(sizeof(char) * (strlen(file_name) + 1));
+  strcpy(file_content->file_name, file_name);
   file_content->file_content_head = NULL;
   file_content->total_line_size = 0;
   return file_content;
@@ -144,7 +146,7 @@ void print_file_content(file_content_t *file_content)
 }
 
 /*******************************************************************************
- * char *to_string(file_content_t *file_content)
+ * char *file_content_to_string(file_content_t *file_content)
  *
  * to_string will create a string with file_content by separating each line with
  *    a new line character. The memory for the string is allocated by malloc.
@@ -152,7 +154,7 @@ void print_file_content(file_content_t *file_content)
  * @param file_content_t *file_content
  * @return char*
  ******************************************************************************/
-char *to_string(file_content_t *file_content)
+char *file_content_to_string(file_content_t *file_content)
 {
   if (file_content->total_line_size == 0)
     return NULL;
@@ -219,9 +221,9 @@ line_t *init_line_with_text(char *line_text)
  * @param char *file_text
  * @return file_content_t*
  ******************************************************************************/
-file_content_t *init_file_content_with_text(char *file_text)
+file_content_t *init_file_content_with_text(char *file_name, char *file_text)
 {
-  file_content_t *file_content = init_file_content_empty();
+  file_content_t *file_content = init_file_content_empty(file_name);
   char *line_text;
   char *line_sep_ptr = file_text;
   line_t *new_line_struct;
@@ -245,7 +247,7 @@ FILE *open_file_read_mode(char *file_name)
 {
   FILE *fptr;
 
-  fptr = fopen(file_name, "r+");
+  fptr = fopen(file_name, "r");
   if (fptr == NULL)
   {
     printf("Unable to open the file.");
@@ -263,13 +265,13 @@ FILE *open_file_read_mode(char *file_name)
  * @param FILE *fptr
  * @return file_content_t*
  ******************************************************************************/
-file_content_t *init_file_content_with_file(FILE *fptr)
+file_content_t *init_file_content_with_file(char *file_name, FILE *fptr)
 {
   char *get_line_buffer = NULL;
   size_t buffer_size = 0;
   size_t read_size;
 
-  file_content_t *file_content = init_file_content_empty();
+  file_content_t *file_content = init_file_content_empty(file_name);
   while ((read_size = getline(&get_line_buffer, &buffer_size, fptr)) != -1)
   {
     line_t *new_line = init_line_empty();
@@ -284,6 +286,35 @@ file_content_t *init_file_content_with_file(FILE *fptr)
   return file_content;
 }
 
+/*******************************************************************************
+ * void export_file_content(char *file_name, file_content_t *file_content)
+ *
+ * export_file_content will export the file_content to a file specified by file_name
+ *    set file_name to NULL if overwritten is wanted.
+ *
+ * @param
+ *    - char *file_name, (NULL if overwritting)
+ *    - file_content_t *file_content
+ * @return void
+ ******************************************************************************/
+void export_file_content(char *file_name, file_content_t *file_content)
+{
+  if (file_name == NULL)
+    file_name = file_content->file_name;
+  FILE *fptr_dest;
+
+  fptr_dest = fopen(file_name, "w");
+  if (fptr_dest == NULL)
+  {
+    printf("Unable to open the file.");
+    exit(1);
+  }
+  char *export_text = file_content_to_string(file_content);
+  fprintf(fptr_dest, "%s", export_text);
+  free(export_text);
+  fclose(fptr_dest);
+}
+
 void clean_file_system(FILE *fptr, file_content_t *file_content)
 {
   destroy_file_content(file_content);
@@ -294,13 +325,14 @@ int main()
 {
   char *file_name = "Archive/f1.txt";
   FILE *fptr = open_file_read_mode(file_name);
-  file_content_t *file_content = init_file_content_with_file(fptr);
-  print_file_content(file_content);
+  file_content_t *file_content = init_file_content_with_file(file_name, fptr);
+  // print_file_content(file_content);
   line_t *new_line_struct = init_line_with_text("new line is here at 3");
-  add_line(file_content, new_line_struct, 1);
+  add_line(file_content, new_line_struct, 3);
+  // print_file_content(file_content);
+  remove_line(file_content, 7);
   print_file_content(file_content);
-  remove_line(file_content, 1);
-  print_file_content(file_content);
+  export_file_content(NULL, file_content);
   clean_file_system(fptr, file_content);
 
   return 0;
