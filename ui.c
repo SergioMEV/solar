@@ -4,8 +4,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include "file_system.c"
+#include "file_system.h"
 #include "constants.h"
+#include "query_util.h"
+#include "message.h"
+#include "client.c"
 #include <pthread.h>
 
 static FORM *text_form;
@@ -229,17 +232,13 @@ bool text_box_driver(file_content_t *file_content)
             form_driver(text_form, REQ_NEXT_FIELD);
             form_driver(text_form, REQ_PREV_FIELD);
 
-            // Append line to file content at current line
-            line_t *line = init_line_with_text(trim_whitespaces(field_buffer(fields[0], 0)));
-
-            // If we are modifying a line, delete the original line
-            if (CURRENT_ACTION == ACTION_MODIFY)
-                remove_line(file_content, CURRENT_LINE_INDEX);
-            // Add line to file_content
-            add_line(file_content, line, CURRENT_LINE_INDEX);
+            // Make changes
+            process_query(file_content, username, CURRENT_LINE, CURRENT_ACTION, trim_whitespaces(field_buffer(fields[0], 0)));
 
             // Send line message to server
-            // string_concatenate(username, CURRENT_LINE, CURRENT_ACTION, trim_whitespaces(field_buffer(fields[0], 0)));
+            char *query = query_constructor(username, CURRENT_LINE, CURRENT_ACTION, trim_whitespaces(field_buffer(fields[0], 0)));
+            send_message(file_content->server_fd, query);
+            free(query);
 
             // Clearing form
             for (int position = 0; position <= num_chars - 1; position++)
@@ -313,17 +312,18 @@ void line_selection_driver(file_content_t *file_content, int ch, int max_line)
     case 'd':
         // Delete line
         CURRENT_ACTION = ACTION_DELETE;
+
         // Delete from local file content
         if (max_line >= 0)
-            remove_line(file_content, CURRENT_LINE_INDEX);
+            process_query(file_content, username, CURRENT_LINE, CURRENT_ACTION, trim_whitespaces(field_buffer(fields[0], 0)));
+
+        // Send line message to server
+        char *query = query_constructor(username, CURRENT_LINE, CURRENT_ACTION, " ");
+        send_message(file_content->server_fd, query);
+        free(query);
+
         if (CURRENT_LINE_INDEX == max_line)
             CURRENT_LINE--;
-
-        // Create query
-        // string_concatenate(username, CURRENT_LINE, CURRENT_ACTION, "");
-
-        // Send message
-        // send_message()
 
         return;
     case 'n':
