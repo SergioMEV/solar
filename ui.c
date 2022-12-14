@@ -13,7 +13,7 @@ static FIELD *fields[2];
 
 static WINDOW *TEXT_BODY, *TEXT_FORM_BOX, *DISPLAY, *INSTRUCTIONS_BAR;
 
-int CURRENT_LINE_INDEX = 0;
+int CURRENT_LINE_INDEX;
 int CURRENT_ACTION;
 
 char *CURRENT_LINE; 
@@ -65,6 +65,36 @@ int print_text(int min_line, int display_max_y, file_content_t *file_content) {
     return 1;
 }
 
+void modify_action_display(char action, int line_index) {
+    char* full_action;
+    
+    int start_index = 1;
+    if (line_index >= 100) {
+        start_index += 2;
+    } else if (line_index >= 10) {
+        start_index++;
+    }
+
+    switch(action) {
+        case ACTION_APPEND:
+            full_action = "Append";
+            break;
+        case ACTION_INSERT:
+            full_action = "Insert";
+            break;
+        case ACTION_MODIFY:
+            full_action = "Modify";
+            break;
+        case ACTION_DELETE:
+            return;
+    }
+
+    werase(TEXT_FORM_BOX);
+    mvwprintw(TEXT_FORM_BOX, 1, 4 - start_index, "%s @ [%d]:", full_action, line_index);
+    box(TEXT_FORM_BOX, 0, 0);
+    wrefresh(TEXT_FORM_BOX);
+}
+
 // SETUP FUNCTIONS
 
 void screensetup(void) {
@@ -93,18 +123,18 @@ void text_box_setup() {
 	box(TEXT_BODY, 0, 0);
 
     // Text form
-	TEXT_FORM_BOX = derwin(TEXT_BODY, ((int) LINES * 0.3) - 3, (int) COLS - 3, 2, 1);
+	TEXT_FORM_BOX = derwin(TEXT_BODY, ((int) LINES * 0.3) - 3, (int) COLS - 4, 2, 2);
 	if (TEXT_FORM_BOX == NULL) {
         perror("Couldn't initialize text form");
     }
 	box(TEXT_FORM_BOX, 0, 0);
 
     // Instructions and text label
-	mvwprintw(TEXT_BODY, 1, 2, "ENTER: Modify line.    i: Insert line at index.    d: Delete line at index.    n: Append new line to end of file.  UP/DOWN Arrows: Scroll through lines.    F1: Exit.");
-	mvwprintw(TEXT_FORM_BOX, 1, 1, "Text:");
+	mvwprintw(TEXT_BODY, 1, 4, "ENTER: Modify line.    i: Insert line.    d: Delete line.    n: Append new line.    UP/DOWN Arrows: Scroll.    F1: Exit.");
+	modify_action_display(ACTION_MODIFY, CURRENT_LINE_INDEX);
 
     // Creating fields
-	fields[0] = new_field(1, MAX_CHARS, 5 + (int) LINES * 0.6, 8, 0, 0);
+	fields[0] = new_field(1, MAX_CHARS, 5 + (int) LINES * 0.6, 19, 0, 0);
     if (fields[0] == NULL) {
         perror("Couldn't initialize text form field");
     }
@@ -131,6 +161,9 @@ void text_box_setup() {
 }
 
 void display_setup() {
+    // Setting current line to first line.
+    CURRENT_LINE_INDEX = 0;
+
     //file_content_t* file_content = arg->file_content;
     DISPLAY = newwin((int) LINES * 0.6, (int) COLS * 0.8, 2, 0);
     if (DISPLAY == NULL) {
@@ -150,18 +183,6 @@ void instructions_setup() {
     }
     box(INSTRUCTIONS_BAR, 0, 0);
 
-    // Writing instructions
-    // mvwprintw(INSTRUCTIONS_BAR, 1, 1, "Instructions:");
-
-    // mvwprintw(INSTRUCTIONS_BAR, 2, 1, "- Use the arrow keys to select a line and");
-    // mvwprintw(INSTRUCTIONS_BAR, 3, 1, "press ENTER to edit it.");
-
-    // mvwprintw(INSTRUCTIONS_BAR, 4, 1, "- To insert a new line at the selected");
-    // mvwprintw(INSTRUCTIONS_BAR, 5, 1, "index, press 'i'.");
-
-    // mvwprintw(INSTRUCTIONS_BAR, 6, 1, "- To delete a selected line, press 'd'.");
-    // mvwprintw(INSTRUCTIONS_BAR, 7, 1, "- To append a new line, press 'n'.");
-    
     refresh();
     wrefresh(INSTRUCTIONS_BAR);
 }
@@ -320,7 +341,11 @@ bool display_driver(file_content_t *file_content) {
 
         // Listen for user input (line selection)
         line_selection_driver( file_content,ch, file_content->total_line_size - 1);
-        
+
+        // Action display
+        if (ch == KEY_UP || ch == KEY_DOWN) CURRENT_ACTION = ACTION_MODIFY;
+        modify_action_display(CURRENT_ACTION, CURRENT_LINE_INDEX);
+
         // Refresh display
         wrefresh(DISPLAY); 
 
