@@ -9,9 +9,9 @@
 #include "socket.h"
 #include "user_info_utils.h"
 #include "file_system.h"
-#include "error_codes.h"
+#include "status_codes.h"
 #include "constants.h"
-#include "query_util.h"
+// #include "query_util.h"
 
 // user information (fd and username)
 user_infos_array_t *user_infos_struct;
@@ -81,11 +81,10 @@ int main()
   // TODO: make file name a user input
   char *file_name = malloc(sizeof(char) * MAX_FILE_NAME_LENGTH);
   strcpy(file_name, "Archive/f1.txt");
-  FILE *fptr = open_file_append_mode(file_name);
+  FILE *fptr = open_file_read_mode(file_name);
+  file_content_t *file_content = init_file_content_with_file(file_name, fptr);
+  fclose(fptr);
   free(file_name);
-  file_content_t *file_content = read_file_to_file_content(fptr);
-  print_file_content(file_content);
-  clean_file_system(fptr, file_content);
 
   while (1)
   {
@@ -104,19 +103,29 @@ int main()
       // duplicate user name detected
       if (send_message(client_socket_fd, ERROR_CODE_DUPLICATE_USER_NAME) == -1)
       {
-        perror("Failed to terminate client connection.");
+        perror("Failed to terminate client connection");
         exit(EXIT_FAILURE);
       }
       continue;
     }
-    else
+
+    if (send_message(client_socket_fd, SUCCESS_CODE_CONNECTION_SUCCESS) == -1)
     {
-      if (send_message(client_socket_fd, SUCCESS_CODE_CONNECTION_SUCCESS) == -1)
-      {
-        perror("Failed to terminate client connection.");
-        exit(EXIT_FAILURE);
-      }
+      perror("Failed to send success code to the client");
+      exit(EXIT_FAILURE);
     }
+    if (send_message(client_socket_fd, file_content->file_name) == -1)
+    {
+      perror("Failed to send file name to the client");
+      exit(EXIT_FAILURE);
+    }
+    char *file_content_str = file_content_to_string(file_content);
+    if (send_message(client_socket_fd, file_content_str) == -1)
+    {
+      perror("Failed to send file content string to the client");
+      exit(EXIT_FAILURE);
+    }
+    free(file_content_str);
 
     // Create a user info struct for the new user
     user_info_t *user_info = user_infos_init();
@@ -131,7 +140,7 @@ int main()
     pthread_t server_thread;
     if (pthread_create(&server_thread, NULL, &client_listener_thread, (void *)user_info))
     {
-      perror("Createing thread for client listner failed");
+      perror("Createing thread for client listener failed");
       exit(EXIT_FAILURE);
     }
   }

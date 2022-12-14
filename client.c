@@ -6,7 +6,8 @@
 
 #include "message.h"
 #include "socket.h"
-#include "error_codes.h"
+#include "status_codes.h"
+#include "file_system.h"
 #include "query_util.h"
 
 #define MAX_USERNAME_LENGTH 20
@@ -14,9 +15,8 @@
 char *username;
 int server_socket_fd;
 
-void *server_listener_thread_fn(void *server_socket_fd_void)
+void *server_listener_thread_fn(void *ptr)
 {
-  int server_socket_fd = *(int *)server_socket_fd_void;
   while (1)
   {
     // Receive message from the server
@@ -68,8 +68,16 @@ int main(int argc, char **argv)
     exit(1);
   }
   free(connection_status);
+
+  char *file_name = receive_message(server_socket_fd);
+  char *file_content_str = receive_message(server_socket_fd);
+  file_content_t *file_content = init_file_content_with_text(file_name, file_content_str);
+  free(file_name);
+  free(file_content_str);
+  print_file_content(file_content);
+
   pthread_t server_listener_thread;
-  if (pthread_create(&server_listener_thread, NULL, server_listener_thread_fn, &server_socket_fd))
+  if (pthread_create(&server_listener_thread, NULL, server_listener_thread_fn, NULL))
   {
     perror("pthread_create failed");
     exit(EXIT_FAILURE);

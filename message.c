@@ -1,6 +1,4 @@
 #include "message.h"
-#include "query_util.h"
-#include "client.c"
 
 #include <errno.h>
 #include <stdint.h>
@@ -10,33 +8,33 @@
 #include <unistd.h>
 
 // Send a across a socket with a header that includes the message length.
-int send_message(int fd, char* message) {
+int send_message(int fd, char *message)
+{
   // If the message is NULL, set errno to EINVAL and return an error
-  if (message == NULL) {
+  if (message == NULL)
+  {
     errno = EINVAL;
     return -1;
   }
 
-  // If fd is 0, assign the server socket fd.
-  if (fd == 0) {
-    fd = server_socket_fd;
-  }
-
   // First, send the length of the message in a size_t
   size_t len = strlen(message);
-  if (write(fd, &len, sizeof(size_t)) != sizeof(size_t)) {
+  if (write(fd, &len, sizeof(size_t)) != sizeof(size_t))
+  {
     // Writing failed, so return an error
     return -1;
   }
 
   // Now we can send the message. Loop until the entire message has been written.
   size_t bytes_written = 0;
-  while (bytes_written < len) {
+  while (bytes_written < len)
+  {
     // Try to write the entire remaining message
     ssize_t rc = write(fd, message + bytes_written, len - bytes_written);
 
     // Did the write fail? If so, return an error
-    if (rc <= 0) return -1;
+    if (rc <= 0)
+      return -1;
 
     // If there was no error, write returned the number of bytes written
     bytes_written += rc;
@@ -46,31 +44,36 @@ int send_message(int fd, char* message) {
 }
 
 // Receive a message from a socket and return the message string (which must be freed later)
-char* receive_message(int fd) {
+char *receive_message(int fd)
+{
   // First try to read in the message length
   size_t len;
-  if (read(fd, &len, sizeof(size_t)) != sizeof(size_t)) {
+  if (read(fd, &len, sizeof(size_t)) != sizeof(size_t))
+  {
     // Reading failed. Return an error
     return NULL;
   }
 
   // Now make sure the message length is reasonable
-  if (len > MAX_MESSAGE_LENGTH) {
+  if (len > MAX_MESSAGE_LENGTH)
+  {
     errno = EINVAL;
     return NULL;
   }
 
   // Allocate space for the message with a null terminator
-  char* result = malloc(len+1);
+  char *result = malloc(len + 1);
 
   // Try to read the message. Loop until the entire message has been read.
   size_t bytes_read = 0;
-  while (bytes_read < len) {
+  while (bytes_read < len)
+  {
     // Try to read the entire remaining message
     ssize_t rc = read(fd, result + bytes_read, len - bytes_read);
 
     // Did the read fail? If so, return an error
-    if (rc <= 0) {
+    if (rc <= 0)
+    {
       free(result);
       return NULL;
     }

@@ -5,6 +5,15 @@
 
 // WARNING to avoide complications, we should force a new line at the end of the file.
 
+/*******************************************************************************
+ * line_t *init_line_empty()
+ *
+ * init_line_empty function allocates memory for line_t struct. It also assigns
+ *    the text field to be NULL.
+ *
+ * @param void
+ * @return line_t*
+ ******************************************************************************/
 line_t *init_line_empty()
 {
   line_t *new_line = (line_t *)malloc(sizeof(line_t));
@@ -12,15 +21,39 @@ line_t *init_line_empty()
   return new_line;
 }
 
-file_content_t *init_file_content_empty()
+/*******************************************************************************
+ * file_content_t *init_file_content_empty()
+ *
+ * init_file_content_empty function allocates memory for file_content_t struct.
+ *      it also assigns NULL to the field file_content_head and 0 to the
+ *      field total_line_size.
+ *
+ * @param void
+ * @return file_content_t*
+ ******************************************************************************/
+file_content_t *init_file_content_empty(char *file_name)
 {
   file_content_t *file_content = (file_content_t *)malloc(sizeof(file_content_t));
+  file_content->file_name = malloc(sizeof(char) * (strlen(file_name) + 1));
+  strcpy(file_content->file_name, file_name);
   file_content->file_content_head = NULL;
   file_content->total_line_size = 0;
   return file_content;
 }
 
-// if appending the line, insert index should be -1
+/*******************************************************************************
+ * void add_line(file_content_t *file_content, line_t *new_line, size_t insert_line_index)
+ *
+ * add_line function add a new line_t into the file_content at line index specified by
+ *    insert_line_index. If users would like to append the new line, set insert_line_index
+ *    to be -1.
+ *
+ * @param
+ *    - file_content_t *file_content,
+ *    - line_t *new_line,
+ *    - size_t insert_line_inde (-1 if appending the new line)
+ * @return void (modifying file_content in place)
+ ******************************************************************************/
 void add_line(file_content_t *file_content, line_t *new_line, size_t insert_line_index)
 {
   file_content->file_content_head = (line_t **)realloc((void *)file_content->file_content_head,
@@ -34,16 +67,62 @@ void add_line(file_content_t *file_content, line_t *new_line, size_t insert_line
   file_content->file_content_head[insert_line_index] = new_line;
 }
 
-void remove_line(file_content_t *file_content, size_t remove_line_index)
+/*******************************************************************************
+ * int remove_line(file_content_t *file_content, size_t remove_line_index)
+ *
+ * remove_line function removes the line specified by remove_line_index from
+ *    the file_content. It also free the memory allocated to the removed line.
+ *
+ * @param
+ *    - file_content_t *file_content,
+ *    - size_t remove_line_index
+ * @return int
+ *    - 0 if removing success, else removing failed
+ ******************************************************************************/
+int remove_line(file_content_t *file_content, size_t remove_line_index)
 {
+  if (remove_line_index >= file_content->total_line_size)
+  {
+    perror("Unable to remove the line because line index overflow");
+    return -1;
+  }
+  free(file_content->file_content_head[remove_line_index]->text);
+  free(file_content->file_content_head[remove_line_index]);
   memmove(file_content->file_content_head + remove_line_index,
           file_content->file_content_head + remove_line_index + 1,
           (file_content->total_line_size - remove_line_index - 1) * sizeof(line_t *));
   file_content->total_line_size--;
   file_content->file_content_head = (line_t **)realloc((void *)file_content->file_content_head,
                                                        (file_content->total_line_size) * sizeof(line_t *));
+  return 0;
 }
 
+/*******************************************************************************
+ * void modify_line(file_content_t *file_content, size_t modify_line_index, char *modified_line_text)
+ *
+ * modify_line changes the field text from the line specified by modify_line_index
+ *    to a new text. modified_line_text should be a string with allocated memory.
+ *
+ * @param
+ *    - file_content_t *file_content, size_t modify_line_index,
+ *    - char *modified_line_text (created by malloc)
+ * @return void (modifying file_content in place)
+ ******************************************************************************/
+void modify_line(file_content_t *file_content, size_t modify_line_index, char *modified_line_text)
+{
+  free(file_content->file_content_head[modify_line_index]->text);
+  file_content->file_content_head[modify_line_index]->text = modified_line_text;
+}
+
+/*******************************************************************************
+ * void destroy_file_content(file_content_t *file_content)
+ *
+ * destroy_file_content free all the memory allocated to file_content. Including
+ *    the array to store line_t, every line_t structs, and text fields in line_t.
+ *
+ * @param file_content_t *file_content
+ * @return void
+ ******************************************************************************/
 void destroy_file_content(file_content_t *file_content)
 {
   for (size_t line_index = 0; line_index < file_content->total_line_size; line_index++)
@@ -55,15 +134,38 @@ void destroy_file_content(file_content_t *file_content)
   free(file_content);
 }
 
+/*******************************************************************************
+ * void print_file_content(file_content_t *file_content)
+ *
+ * print_file_content print the content of file_content in the following format.
+ *
+ *    "Line %zu: <%s>", line_number, text
+ *
+ * @param file_content_t *file_content
+ * @return void
+ ******************************************************************************/
 void print_file_content(file_content_t *file_content)
 {
+  printf("%s", "=====================================================\n");
+  printf("File content for <%s>\n", file_content->file_name);
   for (size_t line_index = 0; line_index < file_content->total_line_size; line_index++)
   {
     printf("Line %zu: <%s>\n", line_index, file_content->file_content_head[line_index]->text);
   }
 }
 
-char *to_string(file_content_t *file_content)
+/*******************************************************************************
+ * char *file_content_to_string(file_content_t *file_content)
+ *
+ * to_string will create a string with file_content by separating each line with
+ *    a new line character. The memory for the string is allocated by malloc.
+ *
+ * @warning Make sure to free the returned string since it is allocated using malloc.
+ *
+ * @param file_content_t *file_content
+ * @return char*
+ ******************************************************************************/
+char *file_content_to_string(file_content_t *file_content)
 {
   if (file_content->total_line_size == 0)
     return NULL;
@@ -100,6 +202,15 @@ char *to_string(file_content_t *file_content)
   return result;
 }
 
+/*******************************************************************************
+ * line_t *init_line_empty()
+ *
+ * init_line_empty function allocates memory for line_t struct. It also assigns
+ *    It also allocate memory for text field in the line_t.
+ *
+ * @param char *line_text
+ * @return line_t*
+ ******************************************************************************/
 line_t *init_line_with_text(char *line_text)
 {
   line_t *new_line = init_line_empty();
@@ -112,9 +223,18 @@ line_t *init_line_with_text(char *line_text)
   return new_line;
 }
 
-file_content_t *init_file_content_with_text(char *file_text)
+/*******************************************************************************
+ * file_content_t *init_file_content_with_text(char *file_text)
+ *
+ * init_file_content_with_text function allocates memory for file_content_t struct.
+ *      It also allocate memory for each line_t and text fields.
+ *
+ * @param char *file_text
+ * @return file_content_t*
+ ******************************************************************************/
+file_content_t *init_file_content_with_text(char *file_name, char *file_text)
 {
-  file_content_t *file_content = init_file_content_empty();
+  file_content_t *file_content = init_file_content_empty(file_name);
   char *line_text;
   char *line_sep_ptr = file_text;
   line_t *new_line_struct;
@@ -126,11 +246,19 @@ file_content_t *init_file_content_with_text(char *file_text)
   return file_content;
 }
 
+/*******************************************************************************
+ * FILE *open_file_read_mode(char *file_name)
+ *
+ * fopen() with error check.
+ *
+ * @param char *file_name
+ * @return FILE *
+ ******************************************************************************/
 FILE *open_file_read_mode(char *file_name)
 {
   FILE *fptr;
 
-  fptr = fopen(file_name, "r+");
+  fptr = fopen(file_name, "r");
   if (fptr == NULL)
   {
     printf("Unable to open the file.");
@@ -139,18 +267,27 @@ FILE *open_file_read_mode(char *file_name)
   return fptr;
 }
 
-file_content_t *read_file_to_file_content(FILE *fptr)
+/*******************************************************************************
+ * file_content_t *init_file_content_with_file(FILE *fptr)
+ *
+ * init_file_content_with_file function allocates memory for file_content_t struct.
+ *      It also allocate memory for each line_t and text fields.
+ *
+ * @param FILE *fptr
+ * @return file_content_t*
+ ******************************************************************************/
+file_content_t *init_file_content_with_file(char *file_name, FILE *fptr)
 {
   char *get_line_buffer = NULL;
   size_t buffer_size = 0;
   size_t read_size;
 
-  file_content_t *file_content = init_file_content_empty();
+  file_content_t *file_content = init_file_content_empty(file_name);
   while ((read_size = getline(&get_line_buffer, &buffer_size, fptr)) != -1)
   {
-    line_t *new_line = init_line_empty();
+
     get_line_buffer[read_size - 1] = '\0';
-    new_line->text = get_line_buffer;
+    line_t *new_line = init_line_with_text(get_line_buffer);
     get_line_buffer = NULL;
     add_line(file_content, new_line, -1);
   }
@@ -158,6 +295,43 @@ file_content_t *read_file_to_file_content(FILE *fptr)
   // to avoid memory leaks!
   free(get_line_buffer);
   return file_content;
+}
+
+/*******************************************************************************
+ * void export_file_content(char *file_name, file_content_t *file_content)
+ *
+ * export_file_content will export the file_content to a file specified by file_name
+ *    set file_name to NULL if overwritten is wanted.
+ *
+ * @param
+ *    - char *file_name, (NULL if overwritting)
+ *    - file_content_t *file_content
+ * @return void
+ ******************************************************************************/
+void export_file_content(char *file_name, file_content_t *file_content)
+{
+  if (file_name == NULL)
+    file_name = file_content->file_name;
+  FILE *fptr_dest;
+
+  fptr_dest = fopen(file_name, "w");
+  if (fptr_dest == NULL)
+  {
+    printf("Unable to open the file.");
+    exit(1);
+  }
+  char *export_text = file_content_to_string(file_content);
+  int export_length = strlen(export_text);
+  if ((export_text = realloc(export_text, sizeof(char) * (export_length + 3))) == NULL)
+  {
+    perror("Allocating memory for export text failed");
+    exit(EXIT_FAILURE);
+  }
+  export_text[export_length + 1] = '\n';
+  export_text[export_length + 2] = '\0';
+  fprintf(fptr_dest, "%s", export_text);
+  free(export_text);
+  fclose(fptr_dest);
 }
 
 void clean_file_system(FILE *fptr, file_content_t *file_content)
@@ -170,13 +344,15 @@ int main()
 {
   char *file_name = "Archive/f1.txt";
   FILE *fptr = open_file_read_mode(file_name);
-  file_content_t *file_content = read_file_to_file_content(fptr);
-  print_file_content(file_content);
+  file_content_t *file_content = init_file_content_with_file(file_name, fptr);
+  // print_file_content(file_content);
   line_t *new_line_struct = init_line_with_text("new line is here at 3");
-  add_line(file_content, new_line_struct, 1);
+  add_line(file_content, new_line_struct, 3);
+  // print_file_content(file_content);
+  // TODO: what is the best way to do error check here?
+  remove_line(file_content, 2);
   print_file_content(file_content);
-  remove_line(file_content, 1);
-  print_file_content(file_content);
+  export_file_content("Archive/f2.txt", file_content);
   clean_file_system(fptr, file_content);
 
   return 0;
