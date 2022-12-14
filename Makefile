@@ -6,8 +6,8 @@ all: ui file_system server client
 clean:
 	rm -rf ui file_system server client main
 
-ui: ui.c query_util.c file_system.c client.c
-	$(CC) $(CFLAGS) -o ui ui.c query_util.c file_system.c client.c -lncurses -lform -lpthread
+ui: ui.c query_util.c file_system.c client.c message.c
+	$(CC) $(CFLAGS) -o ui ui.c query_util.c file_system.c client.c message.c -lncurses -lform -lpthread
 
 file_system: file_system.c 
 	$(CC) $(CFLAGS) -o file_system file_system.c -fsanitize=address
