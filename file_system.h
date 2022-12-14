@@ -4,9 +4,9 @@
 line_t *init_line_empty();
 line_t *init_line_with_text(char *line_text);
 
-file_content_t *init_file_content_empty(char *file_name, int server_fd);
-file_content_t *init_file_content_with_text(char *file_name, int server_fd, char *file_text);
-file_content_t *init_file_content_with_file(char *file_name, int server_fd, FILE *fptr);
+file_content_t *init_file_content_empty(char *file_name, int server_fd, char *user_name);
+file_content_t *init_file_content_with_text(char *file_name, int server_fd, char *user_name, char *file_text);
+file_content_t *init_file_content_with_file(char *file_name, int server_fd, char *user_name, FILE *fptr);
 
 void add_line(file_content_t *file_content, line_t *new_line, size_t line_number);
 int remove_line(file_content_t *file_content, size_t remove_line_index);

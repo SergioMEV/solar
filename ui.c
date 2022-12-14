@@ -459,12 +459,12 @@ void *ui_thread_handler(void *args)
     return NULL;
 }
 
-int main()
-{
-    pthread_t ui_thread;
-    char *file_name = "Archive/f1.txt";
-    FILE *fptr = open_file_read_mode(file_name);
-    file_content_t *file_content = init_file_content_with_file(file_name, 0, fptr);
+// int main()
+// {
+//     pthread_t ui_thread;
+//     char *file_name = "Archive/f1.txt";
+//     FILE *fptr = open_file_read_mode(file_name);
+//     file_content_t *file_content = init_file_content_with_file(file_name, 0, "student testing", fptr);
 
 //     if (pthread_create(&ui_thread, NULL, ui_thread_handler, (void *)file_content))
 //     {

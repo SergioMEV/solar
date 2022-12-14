@@ -6,5 +6,6 @@
 #define ACTION_APPEND 'a'
 #define ACTION_MODIFY '\n'
 #define MAX_CHARS 100
+#define MAX_LINE_NUMBER_DIGITS 10
 
 #define QUERY_SEPERATOR "\n"

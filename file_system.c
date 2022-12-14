@@ -50,11 +50,13 @@ line_t *init_line_with_text(char *line_text)
  *    - int server_fd
  * @return file_content_t*
  ******************************************************************************/
-file_content_t *init_file_content_empty(char *file_name, int server_fd)
+file_content_t *init_file_content_empty(char *file_name, int server_fd, char *user_name)
 {
   file_content_t *file_content = (file_content_t *)malloc(sizeof(file_content_t));
   file_content->file_name = malloc(sizeof(char) * (strlen(file_name) + 1));
   strcpy(file_content->file_name, file_name);
+  file_content->user_name = malloc(sizeof(char) * (strlen(user_name) + 1));
+  strcpy(file_content->user_name, user_name);
   file_content->server_fd = server_fd;
   file_content->file_content_head = NULL;
   file_content->total_line_size = 0;
@@ -71,9 +73,9 @@ file_content_t *init_file_content_empty(char *file_name, int server_fd)
  *    - char *file_text
  * @return file_content_t*
  ******************************************************************************/
-file_content_t *init_file_content_with_text(char *file_name, int server_fd, char *file_text)
+file_content_t *init_file_content_with_text(char *file_name, int server_fd, char *user_name, char *file_text)
 {
-  file_content_t *file_content = init_file_content_empty(file_name, server_fd);
+  file_content_t *file_content = init_file_content_empty(file_name, server_fd, user_name);
   char *line_text;
   char *line_sep_ptr = file_text;
   line_t *new_line_struct;
@@ -95,13 +97,13 @@ file_content_t *init_file_content_with_text(char *file_name, int server_fd, char
  *    - FILE *fptr
  * @return file_content_t*
  ******************************************************************************/
-file_content_t *init_file_content_with_file(char *file_name, int server_fd, FILE *fptr)
+file_content_t *init_file_content_with_file(char *file_name, int server_fd, char *user_name, FILE *fptr)
 {
   char *get_line_buffer = NULL;
   size_t buffer_size = 0;
   size_t read_size;
 
-  file_content_t *file_content = init_file_content_empty(file_name, server_fd);
+  file_content_t *file_content = init_file_content_empty(file_name, server_fd, user_name);
   while ((read_size = getline(&get_line_buffer, &buffer_size, fptr)) != -1)
   {
 
@@ -353,7 +355,7 @@ void clean_file_system(FILE *fptr, file_content_t *file_content)
 // {
 //   char *file_name = "Archive/f1.txt";
 //   FILE *fptr = open_file_read_mode(file_name);
-//   file_content_t *file_content = init_file_content_with_file(file_name, 0, fptr);
+//   file_content_t *file_content = init_file_content_with_file(file_name, 0, "student", fptr);
 //   print_file_content(file_content);
 
 //   // print_file_content(file_content);
