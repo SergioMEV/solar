@@ -139,6 +139,8 @@ void destroy_file_content(file_content_t *file_content)
  ******************************************************************************/
 void print_file_content(file_content_t *file_content)
 {
+  printf("%s", "=====================================================\n");
+  printf("File content for <%s>\n", file_content->file_name);
   for (size_t line_index = 0; line_index < file_content->total_line_size; line_index++)
   {
     printf("Line %zu: <%s>\n", line_index, file_content->file_content_head[line_index]->text);
@@ -150,6 +152,8 @@ void print_file_content(file_content_t *file_content)
  *
  * to_string will create a string with file_content by separating each line with
  *    a new line character. The memory for the string is allocated by malloc.
+ *
+ * @warning Make sure to free the returned string since it is allocated using malloc.
  *
  * @param file_content_t *file_content
  * @return char*
@@ -274,9 +278,9 @@ file_content_t *init_file_content_with_file(char *file_name, FILE *fptr)
   file_content_t *file_content = init_file_content_empty(file_name);
   while ((read_size = getline(&get_line_buffer, &buffer_size, fptr)) != -1)
   {
-    line_t *new_line = init_line_empty();
+
     get_line_buffer[read_size - 1] = '\0';
-    new_line->text = get_line_buffer;
+    line_t *new_line = init_line_with_text(get_line_buffer);
     get_line_buffer = NULL;
     add_line(file_content, new_line, -1);
   }
@@ -321,19 +325,19 @@ void clean_file_system(FILE *fptr, file_content_t *file_content)
   fclose(fptr);
 }
 
-int main()
-{
-  char *file_name = "Archive/f1.txt";
-  FILE *fptr = open_file_read_mode(file_name);
-  file_content_t *file_content = init_file_content_with_file(file_name, fptr);
-  // print_file_content(file_content);
-  line_t *new_line_struct = init_line_with_text("new line is here at 3");
-  add_line(file_content, new_line_struct, 3);
-  // print_file_content(file_content);
-  remove_line(file_content, 7);
-  print_file_content(file_content);
-  export_file_content(NULL, file_content);
-  clean_file_system(fptr, file_content);
+// int main()
+// {
+//   char *file_name = "Archive/f1.txt";
+//   FILE *fptr = open_file_read_mode(file_name);
+//   file_content_t *file_content = init_file_content_with_file(file_name, fptr);
+//   // print_file_content(file_content);
+//   line_t *new_line_struct = init_line_with_text("new line is here at 3");
+//   add_line(file_content, new_line_struct, 3);
+//   // print_file_content(file_content);
+//   remove_line(file_content, 7);
+//   print_file_content(file_content);
+//   export_file_content(NULL, file_content);
+//   clean_file_system(fptr, file_content);
 
-  return 0;
-}
+//   return 0;
+// }

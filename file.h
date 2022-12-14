@@ -1,4 +1,4 @@
-#define FILE_CONTENT_INIT_SIZE 4
+#pragma once
 
 typedef struct line_struct
 {
