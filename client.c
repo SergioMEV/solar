@@ -6,6 +6,7 @@
 
 #include "message.h"
 #include "socket.h"
+#include "ui.h"
 #include "status_codes.h"
 #include "file_system.h"
 #include "query_util.h"
@@ -27,7 +28,7 @@ void *server_listener_thread_fn(void *ptr)
       exit(1);
     }
 
-    printf("Server: %s", message);
+    // printf("Server: %s", message);
     free(message);
   }
   return NULL;
@@ -71,11 +72,12 @@ int main(int argc, char **argv)
 
   char *file_name = receive_message(server_socket_fd);
   char *file_content_str = receive_message(server_socket_fd);
-  file_content_t *file_content = init_file_content_with_text(file_name, file_content_str);
+  file_content_t *file_content = init_file_content_with_text(file_name, server_socket_fd, file_content_str);
   free(file_name);
   free(file_content_str);
-  print_file_content(file_content);
+  // print_file_content(file_content);
 
+  // Create a thread to listen to server messages
   pthread_t server_listener_thread;
   if (pthread_create(&server_listener_thread, NULL, server_listener_thread_fn, NULL))
   {
@@ -83,7 +85,16 @@ int main(int argc, char **argv)
     exit(EXIT_FAILURE);
   }
 
-  // Send a message to the server
+  // Create a thread for displaying ui
+  pthread_t ui_thread;
+
+  if (pthread_create(&ui_thread, NULL, ui_thread_handler, (void *)file_content))
+  {
+    perror("Couldn't create display thread:");
+    exit(2);
+  }
+
+  // Send queries to the server
   char *buffer_get_line = NULL;
   size_t buffer_get_line_size = 0;
   while (1)

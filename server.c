@@ -82,7 +82,7 @@ int main()
   char *file_name = malloc(sizeof(char) * MAX_FILE_NAME_LENGTH);
   strcpy(file_name, "Archive/f1.txt");
   FILE *fptr = open_file_read_mode(file_name);
-  file_content_t *file_content = init_file_content_with_file(file_name, fptr);
+  file_content_t *file_content = init_file_content_with_file(file_name, server_socket_fd, fptr);
   fclose(fptr);
   free(file_name);
 

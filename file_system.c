@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "file.h"
+#include "query_util.h"
 
 // WARNING to avoide complications, we should force a new line at the end of the file.
 
@@ -22,20 +23,23 @@ line_t *init_line_empty()
 }
 
 /*******************************************************************************
- * file_content_t *init_file_content_empty()
+ * file_content_t *init_file_content_empty(char *file_name, int server_fd)
  *
  * init_file_content_empty function allocates memory for file_content_t struct.
  *      it also assigns NULL to the field file_content_head and 0 to the
  *      field total_line_size.
  *
- * @param void
+ * @param
+ *    - char *file_name,
+ *    - int server_fd
  * @return file_content_t*
  ******************************************************************************/
-file_content_t *init_file_content_empty(char *file_name)
+file_content_t *init_file_content_empty(char *file_name, int server_fd)
 {
   file_content_t *file_content = (file_content_t *)malloc(sizeof(file_content_t));
   file_content->file_name = malloc(sizeof(char) * (strlen(file_name) + 1));
   strcpy(file_content->file_name, file_name);
+  file_content->server_fd = server_fd;
   file_content->file_content_head = NULL;
   file_content->total_line_size = 0;
   return file_content;
@@ -111,7 +115,8 @@ int remove_line(file_content_t *file_content, size_t remove_line_index)
 void modify_line(file_content_t *file_content, size_t modify_line_index, char *modified_line_text)
 {
   free(file_content->file_content_head[modify_line_index]->text);
-  file_content->file_content_head[modify_line_index]->text = modified_line_text;
+  file_content->file_content_head[modify_line_index]->text = malloc(sizeof(char) * (strlen(modified_line_text) + 1));
+  strcpy(file_content->file_content_head[modify_line_index]->text, modified_line_text);
 }
 
 /*******************************************************************************
@@ -229,12 +234,15 @@ line_t *init_line_with_text(char *line_text)
  * init_file_content_with_text function allocates memory for file_content_t struct.
  *      It also allocate memory for each line_t and text fields.
  *
- * @param char *file_text
+ * @param
+ *    - char *file_name,
+ *    - int server_fd,
+ *    - char *file_text
  * @return file_content_t*
  ******************************************************************************/
-file_content_t *init_file_content_with_text(char *file_name, char *file_text)
+file_content_t *init_file_content_with_text(char *file_name, int server_fd, char *file_text)
 {
-  file_content_t *file_content = init_file_content_empty(file_name);
+  file_content_t *file_content = init_file_content_empty(file_name, server_fd);
   char *line_text;
   char *line_sep_ptr = file_text;
   line_t *new_line_struct;
@@ -268,21 +276,24 @@ FILE *open_file_read_mode(char *file_name)
 }
 
 /*******************************************************************************
- * file_content_t *init_file_content_with_file(FILE *fptr)
+ * file_content_t *init_file_content_with_file(char *file_name, int server_fd, FILE *fptr)
  *
  * init_file_content_with_file function allocates memory for file_content_t struct.
  *      It also allocate memory for each line_t and text fields.
  *
- * @param FILE *fptr
+ * @param
+ *    - char *file_name,
+ *    - int server_fd,
+ *    - FILE *fptr
  * @return file_content_t*
  ******************************************************************************/
-file_content_t *init_file_content_with_file(char *file_name, FILE *fptr)
+file_content_t *init_file_content_with_file(char *file_name, int server_fd, FILE *fptr)
 {
   char *get_line_buffer = NULL;
   size_t buffer_size = 0;
   size_t read_size;
 
-  file_content_t *file_content = init_file_content_empty(file_name);
+  file_content_t *file_content = init_file_content_empty(file_name, server_fd);
   while ((read_size = getline(&get_line_buffer, &buffer_size, fptr)) != -1)
   {
 
@@ -333,6 +344,29 @@ void export_file_content(char *file_name, file_content_t *file_content)
   free(export_text);
   fclose(fptr_dest);
 }
+// TODO parse query in the client!
+// "{user_name}\n{line_index}\n{action}\n{message}"
+void process_query(file_content_t *file_content, char *user_name,
+                   int line_index, char action, char *modified_line_text)
+{
+  line_t *new_line;
+  switch (action)
+  {
+  case ACTION_DELETE:
+    // Delete line
+    remove_line(file_content, line_index);
+    return;
+  case ACTION_MODIFY:
+    // Modify line
+    modify_line(file_content, line_index, modified_line_text);
+    return;
+  default:
+    // insert or apped line
+    new_line = init_line_with_text(modified_line_text);
+    add_line(file_content, new_line, line_index);
+    return;
+  }
+}
 
 void clean_file_system(FILE *fptr, file_content_t *file_content)
 {
@@ -344,15 +378,16 @@ int main()
 {
   char *file_name = "Archive/f1.txt";
   FILE *fptr = open_file_read_mode(file_name);
-  file_content_t *file_content = init_file_content_with_file(file_name, fptr);
-  // print_file_content(file_content);
-  line_t *new_line_struct = init_line_with_text("new line is here at 3");
-  add_line(file_content, new_line_struct, 3);
-  // print_file_content(file_content);
-  // TODO: what is the best way to do error check here?
-  remove_line(file_content, 2);
+  file_content_t *file_content = init_file_content_with_file(file_name, 0, fptr);
   print_file_content(file_content);
-  export_file_content("Archive/f2.txt", file_content);
+
+  // print_file_content(file_content);
+  char *text = malloc(sizeof(char) * 100);
+  strcpy(text, "inserting line here");
+  process_query(file_content, "student", -1, ACTION_INSERT, text);
+  print_file_content(file_content);
+  // export_file_content("Archive/f2.txt", file_content);
+  free(text);
   clean_file_system(fptr, file_content);
 
   return 0;
