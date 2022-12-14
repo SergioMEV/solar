@@ -5,8 +5,9 @@
 #include <string.h>
 
 // Concatinate all inputs to one string variable.
-char *string_concatenate(char *user_name, char *line_num, char *action, char *message)
+char *query_constructor(char *user_name, char *line_num, char *action, char *message)
 {
+  // "{user_name}\n{line_num}\n{action}\n{message}"
   // TODO explain why +5
   char *combined_message = malloc(sizeof(char) * (strlen(user_name) + strlen(line_num) + strlen(action) + strlen(message) + 5));
   strcpy(combined_message, line_num);

@@ -48,9 +48,10 @@ $ ./server
 
 ### 3. Join session
 ```
-$ ./client 
+$ ./client <server name> <port> <user name>
 ```
 
 ### 4. Export chat as a txt file
 
 ### 5. Quit session
+Kill the terminal to exit the session. Note that if server quits, all the clients will also quit. 
