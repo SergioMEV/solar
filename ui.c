@@ -460,22 +460,22 @@ void *ui_thread_handler(void *args)
     return NULL;
 }
 
-int main()
-{
-    pthread_t ui_thread;
-    char *file_name = "Archive/f1.txt";
-    FILE *fptr = open_file_read_mode(file_name);
-    file_content_t *file_content = read_file_to_file_content(fptr);
+// int main()
+// {
+//     pthread_t ui_thread;
+//     char *file_name = "Archive/f1.txt";
+//     FILE *fptr = open_file_read_mode(file_name);
+//     file_content_t *file_content = read_file_to_file_content(fptr);
 
-    if (pthread_create(&ui_thread, NULL, ui_thread_handler, (void *)file_content))
-    {
-        perror("Couldn't create display thread:");
-        exit(2);
-    }
+//     if (pthread_create(&ui_thread, NULL, ui_thread_handler, (void *)file_content))
+//     {
+//         perror("Couldn't create display thread:");
+//         exit(2);
+//     }
 
-    if (pthread_join(ui_thread, NULL))
-    {
-        perror("Couldn't join display thread");
-        exit(2);
-    }
-}
+//     if (pthread_join(ui_thread, NULL))
+//     {
+//         perror("Couldn't join display thread");
+//         exit(2);
+//     }
+// }

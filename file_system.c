@@ -1,6 +1,9 @@
+#pragma once
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <file_system.h>
 #include "file.h"
 #include "query_util.h"
 
@@ -374,21 +377,21 @@ void clean_file_system(FILE *fptr, file_content_t *file_content)
   fclose(fptr);
 }
 
-int main()
-{
-  char *file_name = "Archive/f1.txt";
-  FILE *fptr = open_file_read_mode(file_name);
-  file_content_t *file_content = init_file_content_with_file(file_name, 0, fptr);
-  print_file_content(file_content);
+// int main()
+// {
+//   char *file_name = "Archive/f1.txt";
+//   FILE *fptr = open_file_read_mode(file_name);
+//   file_content_t *file_content = init_file_content_with_file(file_name, 0, fptr);
+//   print_file_content(file_content);
 
-  // print_file_content(file_content);
-  char *text = malloc(sizeof(char) * 100);
-  strcpy(text, "inserting line here");
-  process_query(file_content, "student", -1, ACTION_INSERT, text);
-  print_file_content(file_content);
-  // export_file_content("Archive/f2.txt", file_content);
-  free(text);
-  clean_file_system(fptr, file_content);
+//   // print_file_content(file_content);
+//   char *text = malloc(sizeof(char) * 100);
+//   strcpy(text, "inserting line here");
+//   process_query(file_content, "student", -1, ACTION_INSERT, text);
+//   print_file_content(file_content);
+//   // export_file_content("Archive/f2.txt", file_content);
+//   free(text);
+//   clean_file_system(fptr, file_content);
 
-  return 0;
-}
+//   return 0;
+// }

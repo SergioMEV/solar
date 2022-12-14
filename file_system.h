@@ -1,4 +1,4 @@
-
+#pragma once
 #include "file.h"
 
 line_t *init_line_empty();
