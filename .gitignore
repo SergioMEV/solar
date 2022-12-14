@@ -3,6 +3,7 @@ ui
 server
 client
 .DS_Store
+.VSCodeCounter
 .vscode/
 *.DSYM/
 file_system
