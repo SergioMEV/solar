@@ -4,6 +4,8 @@
 line_t *init_line_empty();
 file_content_t *init_file_content_empty(char *file_name);
 void add_line(file_content_t *file_content, line_t *new_line, size_t line_number);
+int remove_line(file_content_t *file_content, size_t remove_line_index);
+void modify_line(file_content_t *file_content, size_t modify_line_index, char *modified_line_text);
 void destroy_file_contnt(file_content_t *file_content);
 void print_file_content(file_content_t *file_content);
 line_t *init_line_with_text(char *line_text);

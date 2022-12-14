@@ -68,7 +68,7 @@ void add_line(file_content_t *file_content, line_t *new_line, size_t insert_line
 }
 
 /*******************************************************************************
- * void remove_line(file_content_t *file_content, size_t remove_line_index)
+ * int remove_line(file_content_t *file_content, size_t remove_line_index)
  *
  * remove_line function removes the line specified by remove_line_index from
  *    the file_content. It also free the memory allocated to the removed line.
@@ -76,10 +76,16 @@ void add_line(file_content_t *file_content, line_t *new_line, size_t insert_line
  * @param
  *    - file_content_t *file_content,
  *    - size_t remove_line_index
- * @return void (modifying file_content in place)
+ * @return int
+ *    - 0 if removing success, else removing failed
  ******************************************************************************/
-void remove_line(file_content_t *file_content, size_t remove_line_index)
+int remove_line(file_content_t *file_content, size_t remove_line_index)
 {
+  if (remove_line_index >= file_content->total_line_size)
+  {
+    perror("Unable to remove the line because line index overflow");
+    return -1;
+  }
   free(file_content->file_content_head[remove_line_index]->text);
   free(file_content->file_content_head[remove_line_index]);
   memmove(file_content->file_content_head + remove_line_index,
@@ -88,6 +94,7 @@ void remove_line(file_content_t *file_content, size_t remove_line_index)
   file_content->total_line_size--;
   file_content->file_content_head = (line_t **)realloc((void *)file_content->file_content_head,
                                                        (file_content->total_line_size) * sizeof(line_t *));
+  return 0;
 }
 
 /*******************************************************************************
@@ -314,6 +321,14 @@ void export_file_content(char *file_name, file_content_t *file_content)
     exit(1);
   }
   char *export_text = file_content_to_string(file_content);
+  int export_length = strlen(export_text);
+  if ((export_text = realloc(export_text, sizeof(char) * (export_length + 3))) == NULL)
+  {
+    perror("Allocating memory for export text failed");
+    exit(EXIT_FAILURE);
+  }
+  export_text[export_length + 1] = '\n';
+  export_text[export_length + 2] = '\0';
   fprintf(fptr_dest, "%s", export_text);
   free(export_text);
   fclose(fptr_dest);
@@ -325,19 +340,20 @@ void clean_file_system(FILE *fptr, file_content_t *file_content)
   fclose(fptr);
 }
 
-// int main()
-// {
-//   char *file_name = "Archive/f1.txt";
-//   FILE *fptr = open_file_read_mode(file_name);
-//   file_content_t *file_content = init_file_content_with_file(file_name, fptr);
-//   // print_file_content(file_content);
-//   line_t *new_line_struct = init_line_with_text("new line is here at 3");
-//   add_line(file_content, new_line_struct, 3);
-//   // print_file_content(file_content);
-//   remove_line(file_content, 7);
-//   print_file_content(file_content);
-//   export_file_content(NULL, file_content);
-//   clean_file_system(fptr, file_content);
+int main()
+{
+  char *file_name = "Archive/f1.txt";
+  FILE *fptr = open_file_read_mode(file_name);
+  file_content_t *file_content = init_file_content_with_file(file_name, fptr);
+  // print_file_content(file_content);
+  line_t *new_line_struct = init_line_with_text("new line is here at 3");
+  add_line(file_content, new_line_struct, 3);
+  // print_file_content(file_content);
+  // TODO: what is the best way to do error check here?
+  remove_line(file_content, 2);
+  print_file_content(file_content);
+  export_file_content("Archive/f2.txt", file_content);
+  clean_file_system(fptr, file_content);
 
-//   return 0;
-// }
+  return 0;
+}
