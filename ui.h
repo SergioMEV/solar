@@ -2,9 +2,12 @@
 #include "file_system.h"
 #include <stdbool.h>
 
-static char *trim_whitespaces(char *str);
+char *strstrip(char *str);
 int print_text(int min_line, int display_max_y, file_content_t *file_content);
 void modify_action_display(char action, int line_index);
+bool request_access(file_content_t *file_content);
+void add_to_log(file_content_t *file_content, char *user_name, char *new_line, int line_index, char action);
+int print_log(int display_max_y, file_content_t *file_content);
 
 // SETUP FUNCTIONS
 void screensetup(void);
@@ -19,3 +22,4 @@ bool display_driver(file_content_t *file_content);
 
 // MAIN THREAD FUNCTION
 void *ui_thread_handler(void *args);
+

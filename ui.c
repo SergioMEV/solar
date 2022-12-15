@@ -88,6 +88,102 @@ int print_text(int min_line, int display_max_y, file_content_t *file_content)
 }
 
 /*******************************************************************************
+ * print_text takes in the minimum line index on screen, the total number of lines in the display, and the file_content struct 
+ *      and prints out the maximum amount of lines possible on the display window, starting from the line with index min_line.
+ *
+ * @param
+ *    - int display_max_y,
+ *    - file_content_t *file_content
+ * @return int
+ ******************************************************************************/
+int print_log(int display_max_y, file_content_t *file_content)
+{
+    char *full_action;
+    werase(MISC_BAR);
+
+    mvwprintw(MISC_BAR, 1, 1, "Log:");
+    box(MISC_BAR, 0, 0);
+
+    log_entry_t *current = file_content->log_head;
+    int screen_index = 0;
+    int log_index = 0;
+    while(current != NULL) {
+
+        if (log_index < file_content->log_head->log_size - (display_max_y-1)) {
+            log_index++;
+            continue;
+        } 
+
+        // Map action to word
+        switch(current->action) {
+            case ACTION_APPEND:
+                full_action = "Appended";
+                break;
+            case ACTION_DELETE:
+                full_action = "Deleted";
+                break;
+            case ACTION_INSERT:
+                full_action = "Inserted";
+                break;
+            case ACTION_MODIFY:
+                full_action = "Modified";
+                break;
+        }
+
+        // printing log
+        mvwprintw(MISC_BAR, screen_index + 2, 1, "%d: (%s) %s [%d]", log_index, current->user_name, full_action, current->line_index);
+
+        box(MISC_BAR, 0, 0);
+        wrefresh(MISC_BAR);
+
+        current = current->next;
+        screen_index++;
+        log_index++;
+    }
+
+
+
+    // if (current == NULL) 
+    //     return 1;
+
+    // int total_log_size = file_content->log_head->log_size;
+    // for (size_t log_index = 0; log_index < display_max_y; log_index++)
+    // {
+    //     // Loop logic
+    //     if (current == NULL)
+    //         break;
+    //     else if (log_index < (total_log_size - display_max_y)) 
+    //         continue;
+    
+    //     //Map action to word
+    //     switch(current->action) {
+    //         case ACTION_APPEND:
+    //             full_action = "Appended";
+    //             break;
+    //         case ACTION_DELETE:
+    //             full_action = "Deleted";
+    //             break;
+    //         case ACTION_INSERT:
+    //             full_action = "Inserted";
+    //             break;
+    //         case ACTION_MODIFY:
+    //             full_action = "Modified";
+    //             break;
+    //     }
+
+    //     // printing log
+    //     mvwprintw(MISC_BAR, (log_index % display_max_y) + 2, 1, "[%d]\n", current->line_index);
+        
+    //     box(MISC_BAR, 0, 0);
+    //     wrefresh(MISC_BAR);
+
+    //     current = current->next;
+    // }
+
+    return 1;
+}
+
+/*******************************************************************************
  * As the name suggests, request_access requests access from the server to edit a line. 
  *      It does this by sending an edit request and waiting for the response.
  *      If access is granted, then returns true, else returns false.
@@ -122,6 +218,48 @@ bool request_access(file_content_t *file_content) {
     
     return TRUE;
 }
+
+/*******************************************************************************
+ * add_to_log appends a log entry to the end of log.
+ *
+ * @param
+ *    - file_content_t *file_content,
+ *    - char *user_name,
+ *    - char *new_line,
+ *    - int line_index,
+ *    - char action
+ *    
+ * @return void
+ ******************************************************************************/
+void add_to_log(file_content_t *file_content, char *user_name, char *new_line, int line_index, char action) {
+    // Building log entry
+    log_entry_t *new_log_entry = (log_entry_t *) malloc(sizeof(log_entry_t));
+
+    new_log_entry->user_name = user_name;
+    new_log_entry->new_line = new_line;
+    new_log_entry->line_index = line_index;
+    new_log_entry->action = action;
+    new_log_entry->log_size = 0;
+    new_log_entry->next = NULL;
+    new_log_entry->last = NULL;
+
+    // If log is empty, insert at head
+    if (file_content->log_head == NULL) {
+        file_content->log_head = new_log_entry;
+        file_content->log_head->last = new_log_entry;
+        file_content->log_head->log_size = 1;
+    } else {
+        // Else, insert after last entry
+        file_content->log_head->last->next = new_log_entry;
+        // Setting as new last node 
+        file_content->log_head->last = new_log_entry;
+        // Increasing log size
+        file_content->log_head->log_size++;
+    }   
+
+    return;
+}
+
 
 /*******************************************************************************
  * modify_action_display takes in the current action and the current line index and
@@ -201,7 +339,7 @@ void screen_setup()
     // Accept keypad input
     keypad(stdscr, TRUE);
     // Makes it so that we read input char by char
-    cbreak();
+    //cbreak();
     // Sets wait time for input in tenths of seconds
     halfdelay(2);
 
@@ -322,7 +460,7 @@ void misc_setup()
 bool text_box_driver(file_content_t *file_content)
 {
     int ch;
-    
+
     // Ask for access
     if (ch != 'a' && ch != 'x' && !request_access(file_content)){
         return TRUE;
@@ -357,6 +495,9 @@ bool text_box_driver(file_content_t *file_content)
             } else {
                 // Make changes
                 process_query(file_content, file_content->user_name, CURRENT_LINE_INDEX, CURRENT_ACTION, strstrip(field_buffer(fields[0], 0)));
+                
+                // Adding to log
+                add_to_log(file_content, file_content->user_name, strstrip(field_buffer(fields[0], 0)), CURRENT_LINE_INDEX, CURRENT_ACTION);
 
                 // Send line message to server
                 char *query = query_constructor(file_content->user_name, CURRENT_LINE_INDEX, CURRENT_ACTION, strstrip(field_buffer(fields[0], 0)));
@@ -440,7 +581,10 @@ bool line_selection_driver(file_content_t *file_content, int ch, int max_line)
         // Delete from local file content
         if (max_line > 0 && request_access(file_content)) {
             process_query(file_content, file_content->user_name, CURRENT_LINE_INDEX, CURRENT_ACTION, strstrip(field_buffer(fields[0], 0)));
-        
+
+            // Adding to log
+            add_to_log(file_content, file_content->user_name, strstrip(field_buffer(fields[0], 0)), CURRENT_LINE_INDEX, CURRENT_ACTION);
+
             // Send line message to server
             char *query = query_constructor(file_content->user_name, CURRENT_LINE_INDEX, CURRENT_ACTION, " ");
             send_message(file_content->server_fd, query);
@@ -493,10 +637,8 @@ bool display_driver(file_content_t *file_content)
     int ch;
     int min_line = 0;
     int display_max_y = ((int)LINES * 0.6) - 2;
-
     while (TRUE)
     {
-
         while ((ch = getch()) == ERR)
         {
             // Print text to display
@@ -510,6 +652,7 @@ bool display_driver(file_content_t *file_content)
             }
 
             print_text(min_line, display_max_y, file_content);
+            print_log(display_max_y, file_content);
         }
 
         // Listen for user input (line selection)
@@ -522,7 +665,6 @@ bool display_driver(file_content_t *file_content)
         
         // Refresh display
         wrefresh(DISPLAY);
-        
 
         // Handle display input exit
         if (action_input && ch == '\n')

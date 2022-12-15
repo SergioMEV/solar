@@ -63,6 +63,7 @@ file_content_t *init_file_content_empty(char *file_name, int server_fd, char *us
   file_content->file_content_head = NULL;
   file_content->total_line_size = 0;
   file_content->is_blocked = REQUEST_PENDING;
+  file_content->log_head = NULL;
   return file_content;
 }
 
@@ -205,6 +206,16 @@ void destroy_file_content(file_content_t *file_content)
     free(file_content->file_content_head[line_index]->owner);
     free(file_content->file_content_head[line_index]);
   }
+  
+  while(file_content->log_head != NULL) {
+    log_entry_t *temp = file_content->log_head;
+    file_content->log_head = file_content->log_head->next;
+    
+    free(temp->user_name); 
+    free(temp->new_line); 
+    free(temp); 
+  }
+
   free(file_content->file_content_head);
   free(file_content);
 }
