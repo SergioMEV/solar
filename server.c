@@ -29,6 +29,16 @@ void *client_listener_thread(void *user_info_void)
     {
       user_infos_remove_user(user_infos_struct, user_info);
       printf("User <%s> leaves the session, remaininng number of users: %zu\n", user_info->user_name, user_infos_struct->size);
+
+      // Loop through lines freeing any line locked by this user.
+      for (int index = 0; index < file_content->total_line_size; index++) {
+        if (strcmp(file_content->file_content_head[index]->owner, user_info->user_name) == 0) {
+          file_content->file_content_head[index]->lock = UNLOCKED;
+          file_content->file_content_head[index]->owner[0] = '\0';
+        }
+      }
+
+
       break;
     }
 
