@@ -18,6 +18,7 @@ line_t *init_line_empty()
 {
   line_t *new_line = (line_t *)malloc(sizeof(line_t));
   new_line->text = NULL;
+  new_line->lock = UNLOCKED;
   return new_line;
 }
 
@@ -60,6 +61,7 @@ file_content_t *init_file_content_empty(char *file_name, int server_fd, char *us
   file_content->server_fd = server_fd;
   file_content->file_content_head = NULL;
   file_content->total_line_size = 0;
+  file_content->is_blocked = REQUEST_PENDING;
   return file_content;
 }
 

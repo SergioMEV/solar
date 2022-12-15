@@ -22,6 +22,7 @@ char *query_constructor(char *user_name, int line_index, char action, char *mess
   strcat(combined_message, QUERY_SEPERATOR);
   // Warning: when action is delete, for consistency reason, lets just keep the message with a specified message.
   strcat(combined_message, message);
+  strcat(combined_message, "\0");
 
   return combined_message;
 }

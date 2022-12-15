@@ -1,5 +1,3 @@
-#include <stdbool.h>
-
 // MISC FUNCTIONS
 #include "file_system.h"
 #include <stdbool.h>
@@ -16,7 +14,7 @@ void instructions_setup();
 // DRIVERS
 
 bool text_box_driver(file_content_t *file_content);
-void line_selection_driver(file_content_t *file_content, int ch, int max_line);
+bool line_selection_driver(file_content_t *file_content, int ch, int max_line);
 bool display_driver(file_content_t *file_content);
 
 // MAIN THREAD FUNCTION

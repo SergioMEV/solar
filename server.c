@@ -44,23 +44,47 @@ void *client_listener_thread(void *user_info_void)
     char action = action_str[0];
     char *user_name = strsep(&query_sep_ptr, QUERY_SEPERATOR);
     char *modified_line = query_sep_ptr;
-    process_query(file_content, user_name, line_index, action, modified_line);
-    free(query_sep_cpy);
-    // Sending message to clients in the network
-    for (int index = 0; index < user_infos_struct->size; index++)
-    {
-      // Skip if socket_fd is the same
-      if (user_infos_struct->user_infos[index] == user_info)
-      {
-        continue;
-      }
 
-      if (send_message(user_infos_struct->user_infos[index]->fd, query) == -1)
+    if (action == ACTION_REQUEST && file_content->file_content_head[line_index]->lock == UNLOCKED) {
+      file_content->file_content_head[line_index]->lock = LOCKED;
+      if (send_message(user_info->fd, REQUEST_ACCEPTED) == -1)
       {
-        perror("Failed to send message to client");
+        perror("Failed to send success code to the client");
         exit(EXIT_FAILURE);
       }
+      printf("Locked line: <%d> \n", line_index);
+    } else if (action == ACTION_REQUEST && file_content->file_content_head[line_index]->lock == LOCKED) {
+      if (send_message(user_info->fd, REQUEST_DENIED) == -1)
+      {
+        perror("Failed to send success code to the client");
+        exit(EXIT_FAILURE);
+      }
+    } else {
+      if (line_index < file_content->total_line_size) file_content->file_content_head[line_index]->lock = UNLOCKED;
+      printf("unlocked line: <%d>\n", line_index);
+      process_query(file_content, user_name, line_index, action, modified_line);
     }
+
+    //process_query(file_content, user_name, line_index, action, modified_line);
+    free(query_sep_cpy);
+
+    // Sending message to clients in the network
+    if (action != ACTION_REQUEST) {
+      for (int index = 0; index < user_infos_struct->size; index++)
+      {
+        // Skip if socket_fd is the same
+        if (user_infos_struct->user_infos[index] == user_info)
+        {
+          continue;
+        }
+
+        if (send_message(user_infos_struct->user_infos[index]->fd, query) == -1)
+        {
+          perror("Failed to send message to client");
+          exit(EXIT_FAILURE);
+        }
+      }
+    }  
     free(query);
   }
   
@@ -174,3 +198,4 @@ int main()
 //   2. server need to find a way to keep track of who owns the line 
 //   3. be careful about racing condition 
 // Warning: no way to queue the changes. 
+// Warning: race condition when two people append at the same time

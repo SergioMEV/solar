@@ -1,4 +1,5 @@
 #include <ncurses.h>
+#include <unistd.h>
 #include <form.h>
 #include <assert.h>
 #include <string.h>
@@ -8,6 +9,7 @@
 #include "constants.h"
 #include "query_util.h"
 #include "message.h"
+#include "ui.h"
 #include <pthread.h>
 
 static FORM *text_form;
@@ -60,7 +62,7 @@ static char *trim_whitespaces(char *buffer)
  *    - file_content_t *file_content
  * @return int
  ******************************************************************************/
-return print_text(int min_line, int display_max_y, file_content_t *file_content)
+int print_text(int min_line, int display_max_y, file_content_t *file_content)
 {
     werase(DISPLAY);
 
@@ -85,6 +87,32 @@ return print_text(int min_line, int display_max_y, file_content_t *file_content)
     return 1;
 }
 
+bool request_access(file_content_t *file_content) {
+    file_content->is_blocked = REQUEST_PENDING;
+    
+    // Ask server to make changes 
+    char* request_line_message = query_constructor(file_content->user_name, CURRENT_LINE_INDEX, ACTION_REQUEST, " ");
+    if (send_message(file_content->server_fd, request_line_message) == -1)
+    {
+        perror("Failed to send message to the server");
+        exit(EXIT_FAILURE);
+    }
+
+    // Wait for response
+    while (strcmp(file_content->is_blocked, REQUEST_PENDING) == 0){
+        continue;
+    }
+
+    // If denied, return false
+    if (strcmp(file_content->is_blocked, REQUEST_DENIED) == 0) {
+        modify_action_display(-1, CURRENT_LINE_INDEX);
+        return FALSE;
+    }
+
+    
+    return TRUE;
+}
+
 /*******************************************************************************
  * modify_action_display takes in the current action and the current line index and
  *      updates the action display inside the form text box.
@@ -96,6 +124,15 @@ return print_text(int min_line, int display_max_y, file_content_t *file_content)
  ******************************************************************************/
 void modify_action_display(char action, int line_index)
 {
+    if (action == -1) {
+        werase(TEXT_FORM_BOX);
+        mvwprintw(TEXT_FORM_BOX, 1, 2, "LINE [%d] LOCKED:", line_index);
+        box(TEXT_FORM_BOX, 0, 0);
+        wrefresh(TEXT_FORM_BOX);
+
+        return;
+    }
+
     char *full_action;
 
     int start_index = 1;
@@ -271,6 +308,12 @@ bool text_box_driver(file_content_t *file_content)
 {
     int ch, num_chars;
     num_chars = 0;
+
+    // Ask for access
+    if (ch != 'n' && !request_access(file_content)){
+        return TRUE;
+    }
+
     // Add line text to field
     for (int i = 0; CURRENT_LINE[i] != '\0'; i++)
     {
@@ -372,9 +415,9 @@ bool text_box_driver(file_content_t *file_content)
  *    - file_content_t *file_content,
  *    - int ch,
  *    - int max_line
- * @return void
+ * @return bool
  ******************************************************************************/
-void line_selection_driver(file_content_t *file_content, int ch, int max_line)
+bool line_selection_driver(file_content_t *file_content, int ch, int max_line)
 {
     switch (ch)
     {
@@ -382,39 +425,38 @@ void line_selection_driver(file_content_t *file_content, int ch, int max_line)
     case '\n':
         // Modify line
         CURRENT_ACTION = ACTION_MODIFY;
-        return;
+        return TRUE;
     case 'd':
         // Delete line
         CURRENT_ACTION = ACTION_DELETE;
 
         // Delete from local file content
-        if (max_line >= 0)
+        if (max_line > 0 && request_access(file_content)) {
             process_query(file_content, file_content->user_name, CURRENT_LINE_INDEX, CURRENT_ACTION, trim_whitespaces(field_buffer(fields[0], 0)));
+        
+            // Send line message to server
+            char *query = query_constructor(file_content->user_name, CURRENT_LINE_INDEX, CURRENT_ACTION, " ");
+            send_message(file_content->server_fd, query);
+            free(query);
 
-        // Send line message to server
-        char *query = query_constructor(file_content->user_name, CURRENT_LINE_INDEX, CURRENT_ACTION, " ");
-        send_message(file_content->server_fd, query);
-        free(query);
+            if (CURRENT_LINE_INDEX == max_line)
+                CURRENT_LINE_INDEX--;
+        }
 
-        if (CURRENT_LINE_INDEX == max_line)
-            CURRENT_LINE_INDEX--;
-
-        return;
+        return FALSE;
     case 'n':
         // Append line
         CURRENT_ACTION = ACTION_APPEND;
         // Update current line index
         CURRENT_LINE_INDEX = max_line + 1;
-        return;
+        return TRUE;
     case 'i':
         // Insert line
         CURRENT_ACTION = ACTION_INSERT;
-        // Set current line to next line
-        CURRENT_LINE_INDEX++;
-        return;
+        return TRUE;
     case 'r':
         // Refresh
-        return;
+        break;
     // Arrow keys
     case KEY_UP:
         CURRENT_LINE_INDEX = (CURRENT_LINE_INDEX == 0) ? CURRENT_LINE_INDEX : CURRENT_LINE_INDEX - 1;
@@ -423,6 +465,8 @@ void line_selection_driver(file_content_t *file_content, int ch, int max_line)
         CURRENT_LINE_INDEX = (CURRENT_LINE_INDEX == max_line) ? CURRENT_LINE_INDEX : CURRENT_LINE_INDEX + 1;
         break;
     }
+
+    return FALSE;
 }
 
 /*******************************************************************************
@@ -461,29 +505,30 @@ bool display_driver(file_content_t *file_content)
         }
 
         // Listen for user input (line selection)
-        line_selection_driver(file_content, ch, file_content->total_line_size - 1);
+        bool action_input = line_selection_driver(file_content, ch, file_content->total_line_size - 1);
 
         // Action display
         if (ch == KEY_UP || ch == KEY_DOWN)
             CURRENT_ACTION = ACTION_MODIFY;
         modify_action_display(CURRENT_ACTION, CURRENT_LINE_INDEX);
-
+        
         // Refresh display
         wrefresh(DISPLAY);
+        
 
         // Handle display input exit
-        if (ch == '\n')
+        if (action_input && ch == '\n')
         { // Selected a line to modify
             // Set CURRENT_LINE for display
             CURRENT_LINE = file_content->file_content_head[CURRENT_LINE_INDEX]->text;
             return TRUE;
         }
-        else if (ch == 'n' || ch == 'i')
+        else if (action_input && (ch == 'i' || ch == 'n'))
         { // Appending new line to file
             CURRENT_LINE = "";
             return TRUE;
         }
-        else if (ch == KEY_F(1))
+        else if (action_input && ch == KEY_F(1))
         { // Exiting program
             return FALSE;
         }

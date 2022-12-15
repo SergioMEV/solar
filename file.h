@@ -3,6 +3,7 @@
 typedef struct line_struct
 {
   char *text;
+  int lock;
 } line_t;
 
 typedef struct file_content_struct
@@ -12,4 +13,5 @@ typedef struct file_content_struct
   char *user_name;
   line_t **file_content_head;
   size_t total_line_size;
+  char* is_blocked;
 } file_content_t;

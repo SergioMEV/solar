@@ -12,7 +12,7 @@
 #include "ui.h"
 #include "constants.h"
 
-#define MAX_USERNAME_LENGTH 20
+
 
 char *username;
 int server_socket_fd;
@@ -29,15 +29,23 @@ void *server_listener_thread_fn(void *ptr)
       perror("message received fail.");
       exit(1);
     }
-    char *query_sep_ptr = query;
-    char *line_index_str = strsep(&query_sep_ptr, QUERY_SEPERATOR);
-    int line_index = atoi(line_index_str);
-    char *action_str = strsep(&query_sep_ptr, QUERY_SEPERATOR);
-    char action = action_str[0];
-    char *user_name = strsep(&query_sep_ptr, QUERY_SEPERATOR);
-    char *modified_line = query_sep_ptr;
-    process_query(file_content, user_name, line_index, action, modified_line);
 
+
+    if (strcmp(query, REQUEST_ACCEPTED) == 0){
+      file_content->is_blocked = REQUEST_ACCEPTED;
+    } else if (strcmp(query, REQUEST_DENIED) == 0) {
+      file_content->is_blocked = REQUEST_DENIED;
+    } else {
+      char *query_sep_ptr = query;
+      char *line_index_str = strsep(&query_sep_ptr, QUERY_SEPERATOR);
+      int line_index = atoi(line_index_str);
+      char *action_str = strsep(&query_sep_ptr, QUERY_SEPERATOR);
+      char action = action_str[0];
+      char *user_name = strsep(&query_sep_ptr, QUERY_SEPERATOR);
+      char *modified_line = query_sep_ptr;
+      process_query(file_content, user_name, line_index, action, modified_line);
+    }
+    
     free(query);
   }
   return NULL;
