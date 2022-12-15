@@ -25,14 +25,14 @@ char *CURRENT_LINE;
 // MISC FUNCTIONS
 
 /*******************************************************************************
- * trim_whitespaces takes in the buffer char array and returns the buffer 
+ * strstrip takes in the buffer char array and returns the buffer 
  *  without any leading or trailing spaces. Needed because forms.h adds whitespaces to the buffer/
  *
  * @param
  *    - char *buffer
  * @return char*
  ******************************************************************************/
-static char *trim_whitespaces(char *buffer)
+char *strstrip(char *buffer)
 {
     char *last_char;
 
@@ -157,22 +157,27 @@ void modify_action_display(char action, int line_index)
     switch (action)
     {
     case ACTION_APPEND:
-        full_action = "Append";
+        full_action = "Append @";
         break;
     case ACTION_INSERT:
-        full_action = "Insert";
+        full_action = "Insert @";
         break;
     case ACTION_MODIFY:
-        full_action = "Modify";
+        full_action = "Modify @";
         break;
     case ACTION_DELETE:
         return;
+    case ACTION_EXPORT:
+        full_action = "Export @";
+        line_index = 0;
+        start_index = 1;
+        break;
     default:
         return;
     }
 
     werase(TEXT_FORM_BOX);
-    mvwprintw(TEXT_FORM_BOX, 1, 4 - start_index, "%s @ [%d]:", full_action, line_index);
+    mvwprintw(TEXT_FORM_BOX, 1, 4 - start_index, "%s [%d]:", full_action, line_index);
     box(TEXT_FORM_BOX, 0, 0);
     wrefresh(TEXT_FORM_BOX);
 }
@@ -227,7 +232,7 @@ void text_box_setup()
     box(TEXT_FORM_BOX, 0, 0);
 
     // Instructions and text label
-    mvwprintw(TEXT_BODY, 1, 4, "ENTER: Modify line.    i: Insert line.    d: Delete line.    a: Append new line.    UP/DOWN Arrows: Scroll.    F1: Exit.");
+    mvwprintw(TEXT_BODY, 1, 4, "ENTER: Modify line.    i: Insert line.    d: Delete line.    a: Append new line.    UP/DOWN Arrows: Scroll.    x: Export to txt    ESC: Exit.");
     modify_action_display(ACTION_MODIFY, CURRENT_LINE_INDEX);
 
     // Creating fields
@@ -315,11 +320,10 @@ void misc_setup()
  ******************************************************************************/
 bool text_box_driver(file_content_t *file_content)
 {
-    int ch, num_chars;
-    num_chars = 0;
-
+    int ch;
+    
     // Ask for access
-    if (ch != 'a' && !request_access(file_content)){
+    if (ch != 'a' && ch != 'x' && !request_access(file_content)){
         return TRUE;
     }
 
@@ -327,11 +331,10 @@ bool text_box_driver(file_content_t *file_content)
     for (int i = 0; CURRENT_LINE[i] != '\0'; i++)
     {
         form_driver(text_form, CURRENT_LINE[i]);
-        num_chars++;
     }
 
     // Receive user input
-    while ((ch = getch()) != KEY_F(1))
+    while ((ch = getch()) != 27) // 27 is ASCII for escape key
     {
         switch (ch)
         {
@@ -341,29 +344,31 @@ bool text_box_driver(file_content_t *file_content)
             form_driver(text_form, REQ_NEXT_FIELD);
             form_driver(text_form, REQ_PREV_FIELD);
 
-            // Make changes
-            process_query(file_content, file_content->user_name, CURRENT_LINE_INDEX, CURRENT_ACTION, trim_whitespaces(field_buffer(fields[0], 0)));
+            // If exporting, export and ignore query 
+            if (CURRENT_ACTION == ACTION_EXPORT) {
+                export_file_content(strstrip(field_buffer(fields[0], 0)), file_content);
 
-            // Send line message to server
+                // Success message
+                werase(TEXT_FORM_BOX);
+                mvwprintw(TEXT_FORM_BOX, 1, 5, "SUCCESS:");
+                box(TEXT_FORM_BOX, 0, 0);
+                wrefresh(TEXT_FORM_BOX);
+            } else {
+                // Make changes
+                process_query(file_content, file_content->user_name, CURRENT_LINE_INDEX, CURRENT_ACTION, strstrip(field_buffer(fields[0], 0)));
+
+                // Send line message to server
+                char *query = query_constructor(file_content->user_name, CURRENT_LINE_INDEX, CURRENT_ACTION, strstrip(field_buffer(fields[0], 0)));
+                if (send_message(file_content->server_fd, query) == -1)
+                {
+                    perror("Failed to send message to the server");
+                    exit(EXIT_FAILURE);
+                }
+                free(query);
+            }
             
-            char *query = query_constructor(file_content->user_name, CURRENT_LINE_INDEX, CURRENT_ACTION, trim_whitespaces(field_buffer(fields[0], 0)));
-            if (send_message(file_content->server_fd, query) == -1)
-            {
-                perror("Failed to send message to the server");
-                exit(EXIT_FAILURE);
-            }
-            free(query);
-
             // Clearing form
-            for (int position = 0; position <= num_chars - 1; position++)
-            {
-                form_driver(text_form, REQ_NEXT_CHAR);
-            }
-            while (num_chars > 0)
-            {
-                form_driver(text_form, REQ_DEL_PREV);
-                num_chars--;
-            }
+            form_driver(text_form, REQ_CLR_FIELD);
 
             // Refreshing screen and resetting cursor
             refresh();
@@ -388,10 +393,6 @@ bool text_box_driver(file_content_t *file_content)
             break;
 
         case KEY_BACKSPACE:
-            num_chars--;
-            if (num_chars >= MAX_CHARS)
-                continue;
-
             form_driver(text_form, REQ_DEL_PREV);
             break;
 
@@ -400,10 +401,6 @@ bool text_box_driver(file_content_t *file_content)
             break;
 
         default:
-            num_chars++;
-            if (num_chars >= MAX_CHARS)
-                continue;
-
             form_driver(text_form, ch);
             break;
         }
@@ -441,7 +438,7 @@ bool line_selection_driver(file_content_t *file_content, int ch, int max_line)
 
         // Delete from local file content
         if (max_line > 0 && request_access(file_content)) {
-            process_query(file_content, file_content->user_name, CURRENT_LINE_INDEX, CURRENT_ACTION, trim_whitespaces(field_buffer(fields[0], 0)));
+            process_query(file_content, file_content->user_name, CURRENT_LINE_INDEX, CURRENT_ACTION, strstrip(field_buffer(fields[0], 0)));
         
             // Send line message to server
             char *query = query_constructor(file_content->user_name, CURRENT_LINE_INDEX, CURRENT_ACTION, " ");
@@ -463,9 +460,10 @@ bool line_selection_driver(file_content_t *file_content, int ch, int max_line)
         // Insert line
         CURRENT_ACTION = ACTION_INSERT;
         return TRUE;
-    case 'r':
-        // Refresh
-        break;
+    case 'x':
+        // Export file content to a file
+        CURRENT_ACTION = ACTION_EXPORT;
+        return TRUE;
     // Arrow keys
     case KEY_UP:
         CURRENT_LINE_INDEX = (CURRENT_LINE_INDEX == 0) ? CURRENT_LINE_INDEX : CURRENT_LINE_INDEX - 1;
@@ -537,7 +535,11 @@ bool display_driver(file_content_t *file_content)
             CURRENT_LINE = "";
             return TRUE;
         }
-        else if (action_input && ch == KEY_F(1))
+        else if (action_input && ch == 'x') {
+            CURRENT_LINE = file_content->file_name;
+            return TRUE;
+        }
+        else if (ch == 27) // 27 is ASCII for escape key
         { // Exiting program
             return FALSE;
         }
@@ -608,7 +610,7 @@ void *ui_thread_handler(void *args)
 
     // Titles
     mvprintw(1, 2, "Solar!");
-    mvprintw(1, COLS * 0.82, "Your mother's favorite text editor!");
+    mvprintw(1, COLS - 38, "Your mother's favorite text editor!");
 
     // Driver that controls user interaction
     ui_driver(file_content);

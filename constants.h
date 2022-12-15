@@ -15,6 +15,7 @@
 #define ACTION_APPEND 'a'
 #define ACTION_MODIFY '\n'
 #define ACTION_REQUEST 'R'
+#define ACTION_EXPORT 'x'
 
 #define MAX_CHARS 100
 #define MAX_LINE_NUMBER_DIGITS 10
