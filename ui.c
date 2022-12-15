@@ -88,8 +88,8 @@ int print_text(int min_line, int display_max_y, file_content_t *file_content)
 }
 
 /*******************************************************************************
- * print_text takes in the minimum line index on screen, the total number of lines in the display, and the file_content struct 
- *      and prints out the maximum amount of lines possible on the display window, starting from the line with index min_line.
+ * print_log takes the total number of lines in the display and the file_content struct,
+ *      and prints out the maximum amount of lines possible on the display window prioritizing more recent lines.
  *
  * @param
  *    - int display_max_y,
@@ -140,45 +140,6 @@ int print_log(int display_max_y, file_content_t *file_content)
         screen_index++;
         log_index++;
     }
-
-
-
-    // if (current == NULL) 
-    //     return 1;
-
-    // int total_log_size = file_content->log_head->log_size;
-    // for (size_t log_index = 0; log_index < display_max_y; log_index++)
-    // {
-    //     // Loop logic
-    //     if (current == NULL)
-    //         break;
-    //     else if (log_index < (total_log_size - display_max_y)) 
-    //         continue;
-    
-    //     //Map action to word
-    //     switch(current->action) {
-    //         case ACTION_APPEND:
-    //             full_action = "Appended";
-    //             break;
-    //         case ACTION_DELETE:
-    //             full_action = "Deleted";
-    //             break;
-    //         case ACTION_INSERT:
-    //             full_action = "Inserted";
-    //             break;
-    //         case ACTION_MODIFY:
-    //             full_action = "Modified";
-    //             break;
-    //     }
-
-    //     // printing log
-    //     mvwprintw(MISC_BAR, (log_index % display_max_y) + 2, 1, "[%d]\n", current->line_index);
-        
-    //     box(MISC_BAR, 0, 0);
-    //     wrefresh(MISC_BAR);
-
-    //     current = current->next;
-    // }
 
     return 1;
 }
