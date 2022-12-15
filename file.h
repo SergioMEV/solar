@@ -4,6 +4,7 @@ typedef struct line_struct
 {
   char *text;
   int lock;
+  char* owner;
 } line_t;
 
 typedef struct file_content_struct

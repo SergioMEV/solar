@@ -45,22 +45,34 @@ void *client_listener_thread(void *user_info_void)
     char *user_name = strsep(&query_sep_ptr, QUERY_SEPERATOR);
     char *modified_line = query_sep_ptr;
 
+    // If action is request and line is unlocked, write down owner, lock line, and send back accepted request.
     if (action == ACTION_REQUEST && file_content->file_content_head[line_index]->lock == UNLOCKED) {
+      strcpy(file_content->file_content_head[line_index]->owner, user_info->user_name);
+      file_content->file_content_head[line_index]->owner[strlen(user_info->user_name)+1] = '\0';
       file_content->file_content_head[line_index]->lock = LOCKED;
+      
       if (send_message(user_info->fd, REQUEST_ACCEPTED) == -1)
       {
         perror("Failed to send success code to the client");
         exit(EXIT_FAILURE);
       }
-      printf("Locked line: <%d> \n", line_index);
+      printf("Locked line: <%d>. Owner: <%s> \n", line_index, file_content->file_content_head[line_index]->owner);
+    
+    // If action is request and line is locked, return request denied.
     } else if (action == ACTION_REQUEST && file_content->file_content_head[line_index]->lock == LOCKED) {
       if (send_message(user_info->fd, REQUEST_DENIED) == -1)
       {
         perror("Failed to send success code to the client");
         exit(EXIT_FAILURE);
       }
+
+    // Else, if action is not request, unlock line, since the only one able to send a non-request query to this line is the owner and free owner name
     } else {
-      if (line_index < file_content->total_line_size) file_content->file_content_head[line_index]->lock = UNLOCKED;
+      if (line_index < file_content->total_line_size) {
+        file_content->file_content_head[line_index]->lock = UNLOCKED;
+        file_content->file_content_head[line_index]->owner[0] = '\0';
+      }
+
       printf("unlocked line: <%d>\n", line_index);
       process_query(file_content, user_name, line_index, action, modified_line);
     }

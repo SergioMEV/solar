@@ -19,6 +19,7 @@ line_t *init_line_empty()
   line_t *new_line = (line_t *)malloc(sizeof(line_t));
   new_line->text = NULL;
   new_line->lock = UNLOCKED;
+  new_line->owner = (char *)malloc(sizeof(char) * (MAX_USERNAME_LENGTH + 1));
   return new_line;
 }
 
@@ -162,6 +163,7 @@ int remove_line(file_content_t *file_content, size_t remove_line_index)
     return -1;
   }
   free(file_content->file_content_head[remove_line_index]->text);
+  free(file_content->file_content_head[remove_line_index]->owner);
   free(file_content->file_content_head[remove_line_index]);
   memmove(file_content->file_content_head + remove_line_index,
           file_content->file_content_head + remove_line_index + 1,
@@ -200,6 +202,7 @@ void destroy_file_content(file_content_t *file_content)
   for (size_t line_index = 0; line_index < file_content->total_line_size; line_index++)
   {
     free(file_content->file_content_head[line_index]->text);
+    free(file_content->file_content_head[line_index]->owner);
     free(file_content->file_content_head[line_index]);
   }
   free(file_content->file_content_head);

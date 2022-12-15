@@ -87,9 +87,18 @@ int print_text(int min_line, int display_max_y, file_content_t *file_content)
     return 1;
 }
 
+/*******************************************************************************
+ * As the name suggests, request_access requests access from the server to edit a line. 
+ *      It does this by sending an edit request and waiting for the response.
+ *      If access is granted, then returns true, else returns false.
+ *
+ * @param
+ *    - file_content_t *file_content
+ * @return bool
+ ******************************************************************************/
 bool request_access(file_content_t *file_content) {
     file_content->is_blocked = REQUEST_PENDING;
-    
+
     // Ask server to make changes 
     char* request_line_message = query_constructor(file_content->user_name, CURRENT_LINE_INDEX, ACTION_REQUEST, " ");
     if (send_message(file_content->server_fd, request_line_message) == -1)
@@ -218,7 +227,7 @@ void text_box_setup()
     box(TEXT_FORM_BOX, 0, 0);
 
     // Instructions and text label
-    mvwprintw(TEXT_BODY, 1, 4, "ENTER: Modify line.    i: Insert line.    d: Delete line.    n: Append new line.    UP/DOWN Arrows: Scroll.    F1: Exit.");
+    mvwprintw(TEXT_BODY, 1, 4, "ENTER: Modify line.    i: Insert line.    d: Delete line.    a: Append new line.    UP/DOWN Arrows: Scroll.    F1: Exit.");
     modify_action_display(ACTION_MODIFY, CURRENT_LINE_INDEX);
 
     // Creating fields
@@ -310,7 +319,7 @@ bool text_box_driver(file_content_t *file_content)
     num_chars = 0;
 
     // Ask for access
-    if (ch != 'n' && !request_access(file_content)){
+    if (ch != 'a' && !request_access(file_content)){
         return TRUE;
     }
 
@@ -444,7 +453,7 @@ bool line_selection_driver(file_content_t *file_content, int ch, int max_line)
         }
 
         return FALSE;
-    case 'n':
+    case 'a':
         // Append line
         CURRENT_ACTION = ACTION_APPEND;
         // Update current line index
@@ -523,7 +532,7 @@ bool display_driver(file_content_t *file_content)
             CURRENT_LINE = file_content->file_content_head[CURRENT_LINE_INDEX]->text;
             return TRUE;
         }
-        else if (action_input && (ch == 'i' || ch == 'n'))
+        else if (action_input && (ch == 'i' || ch == 'a'))
         { // Appending new line to file
             CURRENT_LINE = "";
             return TRUE;
