@@ -15,23 +15,37 @@
 
 // user information (fd and username)
 user_infos_array_t *user_infos_struct;
+file_content_t *file_content;
 
 void *client_listener_thread(void *user_info_void)
 {
   user_info_t *user_info = (user_info_t *)user_info_void;
-  char *message;
+  char *query;
   // Read a message from the client & send a message to the client
   while (1)
   {
     // one of the client is dead, remove it
-    if ((message = receive_message(user_info->fd)) == NULL)
+    if ((query = receive_message(user_info->fd)) == NULL)
     {
       user_infos_remove_user(user_infos_struct, user_info);
       printf("User <%s> leaves the session, remaininng number of users: %zu\n", user_info->user_name, user_infos_struct->size);
       break;
     }
 
-    printf("User <%s>: %s", user_info->user_name, message);
+    printf("User <%s> sends the query: <%s>\n", user_info->user_name, query);
+
+    // change file_content on the server
+    char *query_sep_cpy = malloc(sizeof(char) * (strlen(query)+1));
+    strcpy(query_sep_cpy, query);
+    char *query_sep_ptr = query_sep_cpy;
+    char *line_index_str = strsep(&query_sep_ptr, QUERY_SEPERATOR);
+    int line_index = atoi(line_index_str);
+    char *action_str = strsep(&query_sep_ptr, QUERY_SEPERATOR);
+    char action = action_str[0];
+    char *user_name = strsep(&query_sep_ptr, QUERY_SEPERATOR);
+    char *modified_line = query_sep_ptr;
+    process_query(file_content, user_name, line_index, action, modified_line);
+    free(query_sep_cpy);
     // Sending message to clients in the network
     for (int index = 0; index < user_infos_struct->size; index++)
     {
@@ -41,15 +55,15 @@ void *client_listener_thread(void *user_info_void)
         continue;
       }
 
-      if (send_message(user_infos_struct->user_infos[index]->fd, message) == -1)
+      if (send_message(user_infos_struct->user_infos[index]->fd, query) == -1)
       {
         perror("Failed to send message to client");
         exit(EXIT_FAILURE);
       }
     }
+    free(query);
   }
-  // Free the message string
-  free(message);
+  
   // Close socket
   close(user_info->fd);
   user_info_destroy(user_info);
@@ -83,7 +97,7 @@ int main()
   strcpy(file_name, "Archive/f1.txt");
   FILE *fptr = open_file_read_mode(file_name);
   // TODO: user_name hard coded!
-  file_content_t *file_content = init_file_content_with_file(file_name, server_socket_fd, "server", fptr);
+  file_content = init_file_content_with_file(file_name, server_socket_fd, "server", fptr);
   fclose(fptr);
   free(file_name);
 
@@ -150,5 +164,13 @@ int main()
   // Close sockets
   close(server_socket_fd);
 
+  // TODO close all clients' fd 
+
   return 0;
 }
+
+// TODOs: 
+//   1. export ui support 
+//   2. server need to find a way to keep track of who owns the line 
+//   3. be careful about racing condition 
+// Warning: no way to queue the changes. 

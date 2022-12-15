@@ -97,6 +97,8 @@ void modify_action_display(char action, int line_index)
         break;
     case ACTION_DELETE:
         return;
+    default:
+        return;
     }
 
     werase(TEXT_FORM_BOX);
@@ -235,8 +237,13 @@ bool text_box_driver(file_content_t *file_content)
             process_query(file_content, file_content->user_name, CURRENT_LINE_INDEX, CURRENT_ACTION, trim_whitespaces(field_buffer(fields[0], 0)));
 
             // Send line message to server
+            
             char *query = query_constructor(file_content->user_name, CURRENT_LINE_INDEX, CURRENT_ACTION, trim_whitespaces(field_buffer(fields[0], 0)));
-            send_message(file_content->server_fd, query);
+            if (send_message(file_content->server_fd, query) == -1)
+            {
+                perror("Failed to send message to the server");
+                exit(EXIT_FAILURE);
+            }
             free(query);
 
             // Clearing form

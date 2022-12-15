@@ -10,26 +10,35 @@
 #include "file_system.h"
 #include "query_util.h"
 #include "ui.h"
+#include "constants.h"
 
 #define MAX_USERNAME_LENGTH 20
 
 char *username;
 int server_socket_fd;
+file_content_t *file_content;
 
 void *server_listener_thread_fn(void *ptr)
 {
   while (1)
   {
     // Receive message from the server
-    char *message = receive_message(server_socket_fd);
-    if (message == NULL)
+    char *query = receive_message(server_socket_fd);
+    if (query == NULL)
     {
       perror("message received fail.");
       exit(1);
     }
+    char *query_sep_ptr = query;
+    char *line_index_str = strsep(&query_sep_ptr, QUERY_SEPERATOR);
+    int line_index = atoi(line_index_str);
+    char *action_str = strsep(&query_sep_ptr, QUERY_SEPERATOR);
+    char action = action_str[0];
+    char *user_name = strsep(&query_sep_ptr, QUERY_SEPERATOR);
+    char *modified_line = query_sep_ptr;
+    process_query(file_content, user_name, line_index, action, modified_line);
 
-    // printf("Server: %s", message);
-    free(message);
+    free(query);
   }
   return NULL;
 }
@@ -69,13 +78,11 @@ int main(int argc, char **argv)
     exit(1);
   }
   free(connection_status);
-
   char *file_name = receive_message(server_socket_fd);
   char *file_content_str = receive_message(server_socket_fd);
-  file_content_t *file_content = init_file_content_with_text(file_name, server_socket_fd, username, file_content_str);
+  file_content = init_file_content_with_text(file_name, server_socket_fd, username, file_content_str);
   free(file_name);
   free(file_content_str);
-  // print_file_content(file_content);
 
   // Create a thread to listen to server messages
   pthread_t server_listener_thread;
@@ -108,13 +115,12 @@ int main(int argc, char **argv)
   //   }
   // }
   // free(buffer_get_line);
-  // free(username);
-  // // Close socket
-  // close(server_socket_fd);
+
+  free(username);
 
   if (pthread_join(ui_thread, NULL))
-    {
-        perror("Couldn't join display thread");
-        exit(2);
-    }
+  {
+    perror("Couldn't join display thread");
+    exit(2);
+  }
 }
