@@ -115,9 +115,10 @@ bool request_access(file_content_t *file_content) {
     // If denied, return false
     if (strcmp(file_content->is_blocked, REQUEST_DENIED) == 0) {
         modify_action_display(-1, CURRENT_LINE_INDEX);
+        free(request_line_message);
         return FALSE;
     }
-
+    free(request_line_message);
     
     return TRUE;
 }
