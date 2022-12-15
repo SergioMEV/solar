@@ -117,8 +117,14 @@ void *client_listener_thread(void *user_info_void)
   return NULL;
 }
 
-int main()
+int main(int argc, char **argv)
 {
+  if (argc != 2)
+  {
+    fprintf(stderr, "Usage: %s <filename>\n", argv[0]);
+    exit(EXIT_FAILURE);
+  }
+
   // Open a server socket
   unsigned short port = 0;
   int server_socket_fd = server_socket_open(&port);
@@ -140,7 +146,7 @@ int main()
 
   // TODO: make file name a user input
   char *file_name = malloc(sizeof(char) * MAX_FILE_NAME_LENGTH);
-  strcpy(file_name, "Archive/f1.txt");
+  strcpy(file_name, argv[1]);
   FILE *fptr = open_file_read_mode(file_name);
   // TODO: user_name hard coded!
   file_content = init_file_content_with_file(file_name, server_socket_fd, "server", fptr);
