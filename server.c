@@ -221,3 +221,6 @@ int main()
 //   3. be careful about racing condition 
 // Warning: no way to queue the changes. 
 // Warning: race condition when two people append at the same time
+// Warning: exiting program neatly (i.e. using escape key) after editing causes a memory leak.
+//    I think the memory malloc'ed for the combined_message is in query_util.c is leaking, but I freed the query after using it in the drivers in ui.c 
+//    So, Austin has to figure this one out.
