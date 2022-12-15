@@ -13,7 +13,7 @@
 static FORM *text_form;
 static FIELD *fields[2];
 
-static WINDOW *TEXT_BODY, *TEXT_FORM_BOX, *DISPLAY, *INSTRUCTIONS_BAR;
+static WINDOW *TEXT_BODY, *TEXT_FORM_BOX, *DISPLAY, *MISC_BAR;
 
 int CURRENT_LINE_INDEX;
 int CURRENT_ACTION;
@@ -22,30 +22,45 @@ char *CURRENT_LINE;
 
 // MISC FUNCTIONS
 
-static char *trim_whitespaces(char *str)
+/*******************************************************************************
+ * trim_whitespaces takes in the buffer char array and returns the buffer 
+ *  without any leading or trailing spaces. Needed because forms.h adds whitespaces to the buffer/
+ *
+ * @param
+ *    - char *buffer
+ * @return char*
+ ******************************************************************************/
+static char *trim_whitespaces(char *buffer)
 {
-    char *end;
+    char *last_char;
 
-    // trim leading space
-    while (isspace(*str))
-        str++;
+    // Move pointer to first non-space character
+    while (isspace(*buffer))
+        buffer++;
+    if (*buffer == 0) // all spaces?
+        return buffer;
 
-    if (*str == 0) // all spaces?
-        return str;
+    // Find last non-space character
+    last_char = buffer + strnlen(buffer, 128) - 1;
+    while (last_char > buffer && isspace(*last_char))
+        last_char--;
 
-    // trim trailing space
-    end = str + strnlen(str, 128) - 1;
-
-    while (end > str && isspace(*end))
-        end--;
-
-    // write new null terminator
-    *(end + 1) = '\0';
-
-    return str;
+    // Terminate string at space after last non-space character
+    *(last_char + 1) = '\0';
+    return buffer;
 }
 
-int print_text(int min_line, int display_max_y, file_content_t *file_content)
+/*******************************************************************************
+ * print_text takes in the minimum line index on screen, the total number of lines in the display, and the file_content struct 
+ *      and prints out the maximum amount of lines possible on the display window, starting from the line with index min_line.
+ *
+ * @param
+ *    - int min_line,
+ *    - int display_max_y,
+ *    - file_content_t *file_content
+ * @return int
+ ******************************************************************************/
+return print_text(int min_line, int display_max_y, file_content_t *file_content)
 {
     werase(DISPLAY);
 
@@ -70,6 +85,15 @@ int print_text(int min_line, int display_max_y, file_content_t *file_content)
     return 1;
 }
 
+/*******************************************************************************
+ * modify_action_display takes in the current action and the current line index and
+ *      updates the action display inside the form text box.
+ *
+ * @param
+ *    - char action,
+ *    - int line_index
+ * @return void
+ ******************************************************************************/
 void modify_action_display(char action, int line_index)
 {
     char *full_action;
@@ -109,7 +133,12 @@ void modify_action_display(char action, int line_index)
 
 // SETUP FUNCTIONS
 
-void screensetup(void)
+/*******************************************************************************
+ * screen_setup setups miscellanous screen options unique to ncurses.
+ *
+ * @return void
+ ******************************************************************************/
+void screen_setup()
 {
     // Start screen
     initscr();
@@ -127,6 +156,12 @@ void screensetup(void)
     refresh();
 }
 
+/*******************************************************************************
+ * text_box_setup creates the text box, text form box, and the text form.
+ *      It also setups the form with the necessary attributes and prints the instructions.
+ *
+ * @return void
+ ******************************************************************************/
 void text_box_setup()
 {
     // Text box
@@ -178,6 +213,11 @@ void text_box_setup()
     wrefresh(TEXT_FORM_BOX);
 }
 
+/*******************************************************************************
+ * display_setup creates the display window and its borders.
+ *
+ * @return void
+ ******************************************************************************/
 void display_setup()
 {
     // Setting current line to first line.
@@ -195,22 +235,38 @@ void display_setup()
     wrefresh(DISPLAY);
 }
 
-void instructions_setup()
+/*******************************************************************************
+ * misc_setup creates the window next to the display and its borders.
+ *
+ * @return void
+ ******************************************************************************/
+void misc_setup()
 {
     // Creating window
-    INSTRUCTIONS_BAR = newwin((int)LINES * 0.6, (int)COLS * 0.2 - 3, 2, (int)COLS * 0.8 + 2);
-    if (INSTRUCTIONS_BAR == NULL)
+    MISC_BAR = newwin((int)LINES * 0.6, (int)COLS * 0.2 - 3, 2, (int)COLS * 0.8 + 2);
+    if (MISC_BAR == NULL)
     {
         perror("Couldn't initialize text box");
     }
-    box(INSTRUCTIONS_BAR, 0, 0);
+    box(MISC_BAR, 0, 0);
 
     refresh();
-    wrefresh(INSTRUCTIONS_BAR);
+    wrefresh(MISC_BAR);
 }
+
 
 // DRIVERS
 
+/*******************************************************************************
+ * text_box_driver handles all text_box user input. Handles keyboard input and typing.
+ *      It also clears text form after typing. 
+ *      Also, sends out message to server with query and updates file_content.
+ *      Returns true if user did not exit program, else false.
+ *
+ * @param
+ *    - file_content_t *file_content
+ * @return bool
+ ******************************************************************************/
 bool text_box_driver(file_content_t *file_content)
 {
     int ch, num_chars;
@@ -306,6 +362,18 @@ bool text_box_driver(file_content_t *file_content)
     return FALSE;
 }
 
+/*******************************************************************************
+ * line_selection_driver handles all line selection and action key input.
+ *      It sets the current_action to the action specified by the user.
+ *      Also, it sends line delete message in the event of line deletion.
+ *      Takes file_content, the inputed character, and the total number of lines in file.   
+ *
+ * @param
+ *    - file_content_t *file_content,
+ *    - int ch,
+ *    - int max_line
+ * @return void
+ ******************************************************************************/
 void line_selection_driver(file_content_t *file_content, int ch, int max_line)
 {
     switch (ch)
@@ -357,6 +425,17 @@ void line_selection_driver(file_content_t *file_content, int ch, int max_line)
     }
 }
 
+/*******************************************************************************
+ * display_driver handles all the high-level logic of the display. 
+ *      It is a quasi-scheduler that prints the file content to the screen 
+ *      as long as the user hasn't inputed a character. Once it receives an input it passes it off to line_selection_driver.
+ *      It also hands off control to the text_box_driver if it receives an action key.
+ *      Returns true if user hasn't exited the program, else false.
+ *
+ * @param
+ *    - file_content_t *file_content
+ * @return bool
+ ******************************************************************************/
 bool display_driver(file_content_t *file_content)
 {
     int ch;
@@ -411,6 +490,13 @@ bool display_driver(file_content_t *file_content)
     };
 }
 
+/*******************************************************************************
+ * ui_driver calls the display and text box driver as long as the program hasn't been exited.
+ *
+ * @param
+ *    - file_content_t *file_content
+ * @return void
+ ******************************************************************************/
 void ui_driver(file_content_t *file_content)
 {
     while (TRUE)
@@ -424,6 +510,11 @@ void ui_driver(file_content_t *file_content)
 
 // CLEANING FUNCTIONS
 
+/*******************************************************************************
+ * free_ui frees all major windows and components of the ui. Cleans up UI before exiting.
+ *
+ * @return void
+ ******************************************************************************/
 void free_ui()
 {
     // Free text box elements
@@ -442,16 +533,24 @@ void free_ui()
 
 // MAIN THREAD FUNCTION
 
+/*******************************************************************************
+ * ui_thread_handler is the main point of entry to the UI. Initializes all UI elements,
+ *      starts drivers, and cleans up upon clean exit. Takes file_content.
+ *
+ * @param
+ *    - void *args
+ * @return void
+ ******************************************************************************/
 void *ui_thread_handler(void *args)
 {
     file_content_t *file_content = (file_content_t *)args;
 
     // Setup of UI elements
-    screensetup();
+    screen_setup();
 
     display_setup();
     text_box_setup();
-    instructions_setup();
+    misc_setup();
 
     // Titles
     mvprintw(1, 2, "Solar!");
