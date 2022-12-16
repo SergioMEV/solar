@@ -1,11 +1,11 @@
-#include "message.h"
-
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "message.h"
 
 // Send a across a socket with a header that includes the message length.
 int send_message(int fd, char *message)

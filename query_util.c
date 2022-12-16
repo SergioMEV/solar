@@ -1,9 +1,9 @@
-#include "query_util.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "constants.h"
+#include "query_util.h"
 
 // Concatinate all inputs to one string variable.
 char *query_constructor(char *user_name, int line_index, char action, char *message)

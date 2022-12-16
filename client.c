@@ -12,10 +12,12 @@
 #include "ui.h"
 #include "constants.h"
 
+// Global variables
 char *username;
 int server_socket_fd;
 file_content_t *file_content;
 
+// Listen to other client's queried message broadcasted by the server.
 void *server_listener_thread_fn(void *ptr)
 {
   while (1)
@@ -113,7 +115,6 @@ int main(int argc, char **argv)
 
   // Create a thread for displaying ui
   pthread_t ui_thread;
-
   if (pthread_create(&ui_thread, NULL, ui_thread_handler, (void *)file_content))
   {
     perror("Couldn't create display thread:");

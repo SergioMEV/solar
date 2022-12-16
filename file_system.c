@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "file.h"
 #include "file_system.h"
 #include "query_util.h"
@@ -24,8 +25,8 @@ line_t *init_line_empty()
 }
 
 /*******************************************************************************
- * init_line_with_text function allocates memory for line_t struct. It also assigns
- *    It also allocate memory for text field in the line_t.
+ * init_line_with_text function allocates memory for line_t struct. It also 
+ *    allocates memory for text field in the line_t.
  *
  * @param char *line_text
  * @return line_t*
@@ -44,7 +45,7 @@ line_t *init_line_with_text(char *line_text)
 
 /*******************************************************************************
  * init_file_content_empty function allocates memory for file_content_t struct.
- *      it also assigns NULL to the field file_content_head and 0 to the
+ *      It also assigns NULL to the field file_content_head and 0 to the
  *      field total_line_size.
  *
  * @param
@@ -69,7 +70,7 @@ file_content_t *init_file_content_empty(char *file_name, int server_fd, char *us
 
 /*******************************************************************************
  * init_file_content_with_text function allocates memory for file_content_t struct.
- *      It also allocate memory for each line_t and text fields.
+ *      It also allocates memory for each line_t and text fields.
  *
  * @param
  *    - char *file_name,
@@ -123,7 +124,7 @@ file_content_t *init_file_content_with_file(char *file_name, int server_fd, char
 }
 
 /*******************************************************************************
- * add_line function add a new line_t into the file_content at line index specified by
+ * add_line function adds a new line_t into the file_content at line index specified by
  *    insert_line_index. If users would like to append the new line, set insert_line_index
  *    to be -1.
  *
@@ -148,7 +149,7 @@ void add_line(file_content_t *file_content, line_t *new_line, size_t insert_line
 
 /*******************************************************************************
  * remove_line function removes the line specified by remove_line_index from
- *    the file_content. It also free the memory allocated to the removed line.
+ *    the file_content. It also frees the memory allocated to the removed line.
  *
  * @param
  *    - file_content_t *file_content,
@@ -192,7 +193,7 @@ void modify_line(file_content_t *file_content, size_t modify_line_index, char *m
 }
 
 /*******************************************************************************
- * destroy_file_content free all the memory allocated to file_content. Including
+ * destroy_file_content frees all the memory allocated to file_content. Including
  *    the array to store line_t, every line_t structs, and text fields in line_t.
  *
  * @param file_content_t *file_content
@@ -221,7 +222,7 @@ void destroy_file_content(file_content_t *file_content)
 }
 
 /*******************************************************************************
- * print_file_content print the content of file_content in the following format.
+ * print_file_content prints the content of file_content in the following format.
  *
  *    "Line %zu: <%s>", line_number, text
  *
@@ -239,7 +240,7 @@ void print_file_content(file_content_t *file_content)
 }
 
 /*******************************************************************************
- * to_string will create a string with file_content by separating each line with
+ * file_content_to_string will create a string with file_content by separating each line with
  *    a new line character. The memory for the string is allocated by malloc.
  *
  * @warning Make sure to free the returned string since it is allocated using malloc.
@@ -285,7 +286,7 @@ char *file_content_to_string(file_content_t *file_content)
 }
 
 /*******************************************************************************
- * fopen() with error check.
+ * open_file_read_mode will use fopen() and checks for errors.
  *
  * @param char *file_name
  * @return FILE *
@@ -304,8 +305,8 @@ FILE *open_file_read_mode(char *file_name)
 }
 
 /*******************************************************************************
- * export_file_content will export the file_content to a file specified by file_name
- *    set file_name to NULL if overwritten is wanted.
+ * export_file_content will export the file_content to a file specified by file_name;
+ *    sets file_name to NULL if overwritten is wanted.
  *
  * @param
  *    - char *file_name, (NULL if overwritting)
@@ -338,6 +339,17 @@ void export_file_content(char *file_name, file_content_t *file_content)
   fclose(fptr_dest);
 }
 
+/*******************************************************************************
+ * process_query will process the desired action wanted from the user.
+ *
+ * @param 
+ *    - file_content_t *file_content,
+ *    - char *user_name,
+ *    - int line_index,
+ *    - char action, 
+ *    - char *modified_line_text
+ * @return void
+ ******************************************************************************/
 void process_query(file_content_t *file_content, char *user_name,
                    int line_index, char action, char *modified_line_text)
 {
@@ -360,6 +372,14 @@ void process_query(file_content_t *file_content, char *user_name,
   }
 }
 
+/*******************************************************************************
+ * clean_file_system will destory the file content and close it. 
+ *
+ * @param 
+ *    - FILE *fptr,
+ *    - file_content_t *file_content
+ * @return void
+ ******************************************************************************/
 void clean_file_system(FILE *fptr, file_content_t *file_content)
 {
   destroy_file_content(file_content);
