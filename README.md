@@ -1,16 +1,10 @@
-# **IN PROGRESS**
-
 # Solar Shared Editor
 
+[TOC]
+
+## Introduction
+
 Solar is a command line shared text editor that is the final project for Grinnell College's Operating Systems course. This program allows users to collaborate and make changes to the file in real-time. This editor will have a more stringent quality control and conflict-prevention mechanism than Google Docs/Microsoft Word. Users will only be able to edit/create one line at a time and will have exclusive control over that line for the length of their edit. This feature prevents conflicts from arising when multiple users simultaneously edit a shared file. The program is written in C and employs principles such as distributed systems, file systems, and thread synchronization to provide a shared editing system with a file exporting function.
-
-## Table of contents
-
-- [General Info](#solar-shared-editor)
-- [Technologies](#technologies)
-- [Instruction](#instruction)
-- [Demo](#demo)
-- [Other information](#other-information)
 
 ## Technologies
 
@@ -77,34 +71,47 @@ Press `control + c` to terminate the server.
 
 ## Demo
 
-## Other information
 
-<!-- Delete later -->
+
+
+
+## Software Architecture 
+
+![Architecture](README.assets/Architecture.jpg)
 
 # Milestones
 
-## M1 MVP single server
+## Milestone 1: Infrustructure
 
-### Task 1: Read:
+### Task 1 user_info:
 
-- whenever a client receives the message or the sever reads a file
-- store lines of words into array (indexed by line number)
-- line length, and number of lines can be fixed right now
+- define struct
+- write constructors and util functions
 
-### Task 2: Write
+### Task 2 file_system:
 
-- When the server shuts down, the server saves all the lines into a txt file
+- define struct
+- write constructors and util functions
 
-### Task 3: UI implementation using ncurses library
+### Task 3 logs
 
-https://tldp.org/HOWTO/NCURSES-Programming-HOWTO/index.html
+- define log struct 
 
-### Task 4: Server and Client connection
+## Milestone 2: UI
 
-refer to p2p chat lab
+### Task 1 initialize ui
 
-### (Sergio) To Do:
+### Task 2 implement drivers for ui
 
-- [ ] THREADS!!!
+- text-box driver 
+- display driver 
 
-DO NOT DELETE THE CONTENTS BELOW
+## Milestone 3: network connection
+
+- server 
+- client 
+
+
+
+
+
