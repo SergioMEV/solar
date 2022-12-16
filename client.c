@@ -48,8 +48,8 @@ void *server_listener_thread_fn(void *ptr)
       process_query(file_content, user_name, line_index, action, modified_line);
 
       // Adding to log
-      char* log_user_name = malloc(sizeof(char) * (strlen(user_name) + 1));
-      char* log_modified_line = malloc(sizeof(char) * (strlen(modified_line) + 1));
+      char *log_user_name = malloc(sizeof(char) * (strlen(user_name) + 1));
+      char *log_modified_line = malloc(sizeof(char) * (strlen(modified_line) + 1));
 
       strcpy(log_user_name, user_name);
       strcpy(log_modified_line, modified_line);
@@ -119,21 +119,6 @@ int main(int argc, char **argv)
     perror("Couldn't create display thread:");
     exit(2);
   }
-
-  // // Send queries to the server
-  // char *buffer_get_line = NULL;
-  // size_t buffer_get_line_size = 0;
-  // while (1)
-  // {
-  //   getline(&buffer_get_line, &buffer_get_line_size, stdin);
-  //   buffer_get_line[buffer_get_line_size - 1] = '\0';
-  //   if (send_message(server_socket_fd, buffer_get_line) == -1)
-  //   {
-  //     perror("Failed to send message to the server");
-  //     exit(EXIT_FAILURE);
-  //   }
-  // }
-  // free(buffer_get_line);
 
   free(username);
 

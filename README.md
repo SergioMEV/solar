@@ -71,11 +71,11 @@ Press `control + c` to terminate the server.
 
 ## Demo
 
+![image-20221216145334693](README.assets/image-20221216145334693.png)
 
+![image-20221216145359475](README.assets/image-20221216145359475.png)
 
-
-
-## Software Architecture 
+## Software Architecture
 
 ![Architecture](README.assets/Architecture.jpg)
 
@@ -110,6 +110,12 @@ Press `control + c` to terminate the server.
 
 - server 
 - client 
+
+## Reference 
+
+- `message.c`, `server.c` and `client.c` adapted from https://curtsinger.cs.grinnell.edu/teaching/2022F/CSC213/
+
+
 
 
 
