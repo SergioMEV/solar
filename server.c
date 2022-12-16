@@ -31,13 +31,14 @@ void *client_listener_thread(void *user_info_void)
       printf("User <%s> leaves the session, remaininng number of users: %zu\n", user_info->user_name, user_infos_struct->size);
 
       // Loop through lines freeing any line locked by this user.
-      for (int index = 0; index < file_content->total_line_size; index++) {
-        if (strcmp(file_content->file_content_head[index]->owner, user_info->user_name) == 0) {
+      for (int index = 0; index < file_content->total_line_size; index++)
+      {
+        if (strcmp(file_content->file_content_head[index]->owner, user_info->user_name) == 0)
+        {
           file_content->file_content_head[index]->lock = UNLOCKED;
           file_content->file_content_head[index]->owner[0] = '\0';
         }
       }
-
 
       break;
     }
@@ -45,7 +46,7 @@ void *client_listener_thread(void *user_info_void)
     printf("User <%s> sends the query: <%s>\n", user_info->user_name, query);
 
     // change file_content on the server
-    char *query_sep_cpy = malloc(sizeof(char) * (strlen(query)+1));
+    char *query_sep_cpy = malloc(sizeof(char) * (strlen(query) + 1));
     strcpy(query_sep_cpy, query);
     char *query_sep_ptr = query_sep_cpy;
     char *line_index_str = strsep(&query_sep_ptr, QUERY_SEPERATOR);
@@ -56,29 +57,35 @@ void *client_listener_thread(void *user_info_void)
     char *modified_line = query_sep_ptr;
 
     // If action is request and line is unlocked, write down owner, lock line, and send back accepted request.
-    if (action == ACTION_REQUEST && file_content->file_content_head[line_index]->lock == UNLOCKED) {
+    if (action == ACTION_REQUEST && file_content->file_content_head[line_index]->lock == UNLOCKED)
+    {
       strcpy(file_content->file_content_head[line_index]->owner, user_info->user_name);
-      file_content->file_content_head[line_index]->owner[strlen(user_info->user_name)+1] = '\0';
+      file_content->file_content_head[line_index]->owner[strlen(user_info->user_name) + 1] = '\0';
       file_content->file_content_head[line_index]->lock = LOCKED;
-      
+
       if (send_message(user_info->fd, REQUEST_ACCEPTED) == -1)
       {
         perror("Failed to send success code to the client");
         exit(EXIT_FAILURE);
       }
       printf("Locked line: <%d>. Owner: <%s> \n", line_index, file_content->file_content_head[line_index]->owner);
-    
-    // If action is request and line is locked, return request denied.
-    } else if (action == ACTION_REQUEST && file_content->file_content_head[line_index]->lock == LOCKED) {
+
+      // If action is request and line is locked, return request denied.
+    }
+    else if (action == ACTION_REQUEST && file_content->file_content_head[line_index]->lock == LOCKED)
+    {
       if (send_message(user_info->fd, REQUEST_DENIED) == -1)
       {
         perror("Failed to send success code to the client");
         exit(EXIT_FAILURE);
       }
 
-    // Else, if action is not request, unlock line, since the only one able to send a non-request query to this line is the owner and free owner name
-    } else {
-      if (line_index < file_content->total_line_size) {
+      // Else, if action is not request, unlock line, since the only one able to send a non-request query to this line is the owner and free owner name
+    }
+    else
+    {
+      if (line_index < file_content->total_line_size)
+      {
         file_content->file_content_head[line_index]->lock = UNLOCKED;
         file_content->file_content_head[line_index]->owner[0] = '\0';
       }
@@ -87,11 +94,12 @@ void *client_listener_thread(void *user_info_void)
       process_query(file_content, user_name, line_index, action, modified_line);
     }
 
-    //process_query(file_content, user_name, line_index, action, modified_line);
+    // process_query(file_content, user_name, line_index, action, modified_line);
     free(query_sep_cpy);
 
     // Sending message to clients in the network
-    if (action != ACTION_REQUEST) {
+    if (action != ACTION_REQUEST)
+    {
       for (int index = 0; index < user_infos_struct->size; index++)
       {
         // Skip if socket_fd is the same
@@ -106,10 +114,10 @@ void *client_listener_thread(void *user_info_void)
           exit(EXIT_FAILURE);
         }
       }
-    }  
+    }
     free(query);
   }
-  
+
   // Close socket
   close(user_info->fd);
   user_info_destroy(user_info);
@@ -144,11 +152,10 @@ int main(int argc, char **argv)
 
   user_infos_struct = user_infos_array_init();
 
-  // TODO: make file name a user input
   char *file_name = malloc(sizeof(char) * MAX_FILE_NAME_LENGTH);
   strcpy(file_name, argv[1]);
   FILE *fptr = open_file_read_mode(file_name);
-  // TODO: user_name hard coded!
+
   file_content = init_file_content_with_file(file_name, server_socket_fd, "server", fptr);
   fclose(fptr);
   free(file_name);
@@ -216,17 +223,5 @@ int main(int argc, char **argv)
   // Close sockets
   close(server_socket_fd);
 
-  // TODO close all clients' fd 
-
   return 0;
 }
-
-// TODOs: 
-//   1. export ui support 
-//   2. server need to find a way to keep track of who owns the line 
-//   3. be careful about racing condition 
-// Warning: no way to queue the changes. 
-// Warning: race condition when two people append at the same time
-// Warning: exiting program neatly (i.e. using escape key) after editing causes a memory leak.
-//    I think the memory malloc'ed for the combined_message is in query_util.c is leaking, but I freed the query after using it in the drivers in ui.c 
-//    So, Austin has to figure this one out.

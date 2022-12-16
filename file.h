@@ -4,7 +4,7 @@ typedef struct line_struct
 {
   char *text;
   int lock;
-  char* owner;
+  char *owner;
 } line_t;
 
 // Logs struct

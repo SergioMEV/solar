@@ -25,7 +25,7 @@ char *CURRENT_LINE;
 // MISC FUNCTIONS
 
 /*******************************************************************************
- * strstrip takes in the buffer char array and returns the buffer 
+ * strstrip takes in the buffer char array and returns the buffer
  *  without any leading or trailing spaces. Needed because forms.h adds whitespaces to the buffer/
  *
  * @param
@@ -53,7 +53,7 @@ char *strstrip(char *buffer)
 }
 
 /*******************************************************************************
- * print_text takes in the minimum line index on screen, the total number of lines in the display, and the file_content struct 
+ * print_text takes in the minimum line index on screen, the total number of lines in the display, and the file_content struct
  *      and prints out the maximum amount of lines possible on the display window, starting from the line with index min_line.
  *
  * @param
@@ -153,11 +153,12 @@ int print_log(int display_max_y, file_content_t *file_content)
  *    - file_content_t *file_content
  * @return bool
  ******************************************************************************/
-bool request_access(file_content_t *file_content) {
+bool request_access(file_content_t *file_content)
+{
     file_content->is_blocked = REQUEST_PENDING;
 
-    // Ask server to make changes 
-    char* request_line_message = query_constructor(file_content->user_name, CURRENT_LINE_INDEX, ACTION_REQUEST, " ");
+    // Ask server to make changes
+    char *request_line_message = query_constructor(file_content->user_name, CURRENT_LINE_INDEX, ACTION_REQUEST, " ");
     if (send_message(file_content->server_fd, request_line_message) == -1)
     {
         perror("Failed to send message to the server");
@@ -165,18 +166,20 @@ bool request_access(file_content_t *file_content) {
     }
 
     // Wait for response
-    while (strcmp(file_content->is_blocked, REQUEST_PENDING) == 0){
+    while (strcmp(file_content->is_blocked, REQUEST_PENDING) == 0)
+    {
         continue;
     }
 
     // If denied, return false
-    if (strcmp(file_content->is_blocked, REQUEST_DENIED) == 0) {
+    if (strcmp(file_content->is_blocked, REQUEST_DENIED) == 0)
+    {
         modify_action_display(-1, CURRENT_LINE_INDEX);
         free(request_line_message);
         return FALSE;
     }
+
     free(request_line_message);
-    
     return TRUE;
 }
 
@@ -217,10 +220,8 @@ void add_to_log(file_content_t *file_content, char *user_name, char *new_line, i
         // Increasing log size
         file_content->log_head->log_size++;
     }   
-
     return;
 }
-
 
 /*******************************************************************************
  * modify_action_display takes in the current action and the current line index and
@@ -233,7 +234,8 @@ void add_to_log(file_content_t *file_content, char *user_name, char *new_line, i
  ******************************************************************************/
 void modify_action_display(char action, int line_index)
 {
-    if (action == -1) {
+    if (action == -1)
+    {
         werase(TEXT_FORM_BOX);
         mvwprintw(TEXT_FORM_BOX, 1, 2, "LINE [%d] LOCKED:", line_index);
         box(TEXT_FORM_BOX, 0, 0);
@@ -405,12 +407,11 @@ void misc_setup()
     wrefresh(MISC_BAR);
 }
 
-
 // DRIVERS
 
 /*******************************************************************************
  * text_box_driver handles all text_box user input. Handles keyboard input and typing.
- *      It also clears text form after typing. 
+ *      It also clears text form after typing.
  *      Also, sends out message to server with query and updates file_content.
  *      Returns true if user did not exit program, else false.
  *
@@ -423,7 +424,8 @@ bool text_box_driver(file_content_t *file_content)
     int ch;
 
     // Ask for access
-    if (ch != 'a' && ch != 'x' && !request_access(file_content)){
+    if (ch != 'a' && ch != 'x' && !request_access(file_content))
+    {
         return TRUE;
     }
 
@@ -444,8 +446,9 @@ bool text_box_driver(file_content_t *file_content)
             form_driver(text_form, REQ_NEXT_FIELD);
             form_driver(text_form, REQ_PREV_FIELD);
 
-            // If exporting, export and ignore query 
-            if (CURRENT_ACTION == ACTION_EXPORT) {
+            // If exporting, export and ignore query
+            if (CURRENT_ACTION == ACTION_EXPORT)
+            {
                 export_file_content(strstrip(field_buffer(fields[0], 0)), file_content);
 
                 // Success message
@@ -453,10 +456,15 @@ bool text_box_driver(file_content_t *file_content)
                 mvwprintw(TEXT_FORM_BOX, 1, 5, "SUCCESS:");
                 box(TEXT_FORM_BOX, 0, 0);
                 wrefresh(TEXT_FORM_BOX);
-            } else {
+            }
+            else
+            {
                 // Make changes
                 process_query(file_content, file_content->user_name, CURRENT_LINE_INDEX, CURRENT_ACTION, strstrip(field_buffer(fields[0], 0)));
                 
+                // Adding to log
+                add_to_log(file_content, file_content->user_name, strstrip(field_buffer(fields[0], 0)), CURRENT_LINE_INDEX, CURRENT_ACTION);
+
                 // Adding to log
                 add_to_log(file_content, file_content->user_name, strstrip(field_buffer(fields[0], 0)), CURRENT_LINE_INDEX, CURRENT_ACTION);
 
@@ -469,7 +477,7 @@ bool text_box_driver(file_content_t *file_content)
                 }
                 free(query);
             }
-            
+
             // Clearing form
             form_driver(text_form, REQ_CLR_FIELD);
 
@@ -518,7 +526,7 @@ bool text_box_driver(file_content_t *file_content)
  * line_selection_driver handles all line selection and action key input.
  *      It sets the current_action to the action specified by the user.
  *      Also, it sends line delete message in the event of line deletion.
- *      Takes file_content, the inputed character, and the total number of lines in file.   
+ *      Takes file_content, the inputed character, and the total number of lines in file.
  *
  * @param
  *    - file_content_t *file_content,
@@ -540,7 +548,8 @@ bool line_selection_driver(file_content_t *file_content, int ch, int max_line)
         CURRENT_ACTION = ACTION_DELETE;
 
         // Delete from local file content
-        if (max_line > 0 && request_access(file_content)) {
+        if (max_line > 0 && request_access(file_content))
+        {
             process_query(file_content, file_content->user_name, CURRENT_LINE_INDEX, CURRENT_ACTION, strstrip(field_buffer(fields[0], 0)));
 
             // Adding to log
@@ -583,8 +592,8 @@ bool line_selection_driver(file_content_t *file_content, int ch, int max_line)
 }
 
 /*******************************************************************************
- * display_driver handles all the high-level logic of the display. 
- *      It is a quasi-scheduler that prints the file content to the screen 
+ * display_driver handles all the high-level logic of the display.
+ *      It is a quasi-scheduler that prints the file content to the screen
  *      as long as the user hasn't inputed a character. Once it receives an input it passes it off to line_selection_driver.
  *      It also hands off control to the text_box_driver if it receives an action key.
  *      Returns true if user hasn't exited the program, else false.
@@ -623,7 +632,7 @@ bool display_driver(file_content_t *file_content)
         if (ch == KEY_UP || ch == KEY_DOWN)
             CURRENT_ACTION = ACTION_MODIFY;
         modify_action_display(CURRENT_ACTION, CURRENT_LINE_INDEX);
-        
+
         // Refresh display
         wrefresh(DISPLAY);
 
@@ -639,12 +648,13 @@ bool display_driver(file_content_t *file_content)
             CURRENT_LINE = "";
             return TRUE;
         }
-        else if (action_input && ch == 'x') {
+        else if (action_input && ch == 'x')
+        {
             CURRENT_LINE = file_content->file_name;
             return TRUE;
         }
         else if (ch == 27) // 27 is ASCII for escape key
-        { // Exiting program
+        {                  // Exiting program
             return FALSE;
         }
     };
@@ -724,23 +734,3 @@ void *ui_thread_handler(void *args)
 
     return NULL;
 }
-
-// int main()
-// {
-//     pthread_t ui_thread;
-//     char *file_name = "Archive/f1.txt";
-//     FILE *fptr = open_file_read_mode(file_name);
-//     file_content_t *file_content = init_file_content_with_file(file_name, 0, "student testing", fptr);
-
-//     if (pthread_create(&ui_thread, NULL, ui_thread_handler, (void *)file_content))
-//     {
-//         perror("Couldn't create display thread:");
-//         exit(2);
-//     }
-
-//     if (pthread_join(ui_thread, NULL))
-//     {
-//         perror("Couldn't join display thread");
-//         exit(2);
-//     }
-// }

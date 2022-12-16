@@ -1,39 +1,14 @@
-# **IN PROGRESS**
-
 # Solar Shared Editor
 
-Solar is a command line shared text editor that is the final project for Grinnell College's Operating Systems course. This program allows users to collaborate and make changes to the file in real-time. This editor will have a more stringent quality control and conflict-prevention mechanism than Google Docs/Microsoft Word. Users will only be able to edit/create one line at a time and will have exclusive control over that line for the length of their edit. This feature prevents conflicts from arising when multiple users simultaneously edit a shared file. The program is written in C and employs principles such as distributed systems, file systems, and thread synchronization to provide a shared editing system with a file exporting function.
+Solar is a command line shared text editor that is the culminating project for Grinnell College's Operating Systems course. This program allows users to collaborate and make changes to the file in real-time. This editor will have a more stringent quality control and conflict-prevention mechanism than Google Docs/Microsoft Word. Users will only be able to edit/create one line at a time and will have exclusive control over that line for the length of their edit. This feature prevents conflicts from arising when multiple users simultaneously edit a shared file. The program is written in C and employs principles such as distributed systems, file systems, and thread synchronization to provide a shared editing system with a file exporting function.
 
-## Table of contents
-
-- [General Info](#solar-shared-editor)
-- [Technologies](#technologies)
-- [Instruction](#instruction)
-- [Demo](#demo)
-- [Other information](#other-information)
-
-## Technologies
-
-- C
-- LINUX environment
-- Terminal/Command line
-
-## Instruction
-
-### 1. Create a file that you want to work on
-
-This can be done manually in the folder or use the following command to create one using the terminal:
-
-```
-touch <filename>
-```
 
 ### 2. Compilation
 
 Complie the program using the following command:
 
 ```
-$ make
+make
 ```
 
 ### 3. Run server
