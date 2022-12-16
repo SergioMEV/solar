@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Solar is a command line shared text editor that is the final project for Grinnell College's Operating Systems course. This program allows users to collaborate and make changes to the file in real-time. This editor will have a more stringent quality control and conflict-prevention mechanism than Google Docs/Microsoft Word. Users will only be able to edit/create one line at a time and will have exclusive control over that line for the length of their edit. This feature prevents conflicts from arising when multiple users simultaneously edit a shared file. The program is written in C and employs principles such as distributed systems, file systems, and thread synchronization to provide a shared editing system with a file exporting function.
+Solar is a command line shared text editor built for the final project in Grinnell College's Operating Systems course. This program allows users to collaborate and make changes to the file in real time. This editor has a more stringent quality control and conflict-prevention mechanism than Google Docs/Microsoft Word, meaning users can only edit/create one line at a time and have exclusive control over that line for the length of their edit. This feature prevents conflicts from arising when multiple users edit a shared file simultaneously. The program is written in C and employs principles such as distributed systems, file systems, and thread synchronization to provide a shared editing system with a file-exporting function.
 
 ## Technologies
 
@@ -14,10 +14,10 @@ Solar is a command line shared text editor that is the final project for Grinnel
 
 ### 1. Create a file that you want to work on
 
-This can be done manually in the folder or use the following command to create one using the terminal:
+Create a txt file manually in your folder or use the following command to create one using the terminal:
 
 ```
-touch <filename>
+$ touch <filename>
 ```
 
 ### 2. Compilation
@@ -25,12 +25,12 @@ touch <filename>
 Complie the program using the following command:
 
 ```
-make
+$ make
 ```
 
 ### 3. Run server
 
-To start running the server, run the following command with a filename that you created in the first step:
+To start running the server, run the following command with a path to your file that you created in the first step:
 
 ```
 $ ./server <filename>
@@ -44,9 +44,9 @@ To start editing, connect to the server created using the following commands:
 $ ./client <server name> <port> <user name>
 ```
 
-Insert your IP address in <servername> if you are running this program on your personal computer.
+Insert your IP address in <servername> if you are running this program on a machine that is different from the one that created the server. If you are using a Grinnell computer, type the name of the machine to connect. If you are running the program on the same computer as the one that created the server, type `localhost` instead.
 
-An example running the program on one's own computer:
+An example running the program:
 
 ```
 $ ./client localhost 99999 student
@@ -54,7 +54,7 @@ $ ./client localhost 99999 student
 
 ### 5. Client Controls
 
-The following are the controls client users have to edit the file:
+The following are the available controls for users to edit the file:
 
 - `ENTER`: Modify the current line
 - `I`: Insert a new line
@@ -77,45 +77,6 @@ Press `control + c` to terminate the server.
 
 ![Architecture](README.assets/Architecture.jpg)
 
-# Milestones
+## Reference
 
-## Milestone 1: Infrustructure
-
-### Task 1 user_info:
-
-- define struct
-- write constructors and util functions
-
-### Task 2 file_system:
-
-- define struct
-- write constructors and util functions
-
-### Task 3 logs
-
-- define log struct 
-
-## Milestone 2: UI
-
-### Task 1 initialize ui
-
-### Task 2 implement drivers for ui
-
-- text-box driver 
-- display driver 
-
-## Milestone 3: network connection
-
-- server 
-- client 
-
-## Reference 
-
-- `message.c`, `server.c` and `client.c` adapted from https://curtsinger.cs.grinnell.edu/teaching/2022F/CSC213/
-
-
-
-
-
-
-
+- `message.c`, `server.c`, `socket.h` and `client.c` adapted from https://curtsinger.cs.grinnell.edu/teaching/2022F/CSC213/
