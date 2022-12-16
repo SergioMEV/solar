@@ -12,8 +12,6 @@
 #include "ui.h"
 #include "constants.h"
 
-
-
 char *username;
 int server_socket_fd;
 file_content_t *file_content;
@@ -30,12 +28,16 @@ void *server_listener_thread_fn(void *ptr)
       exit(1);
     }
 
-
-    if (strcmp(query, REQUEST_ACCEPTED) == 0){
+    if (strcmp(query, REQUEST_ACCEPTED) == 0)
+    {
       file_content->is_blocked = REQUEST_ACCEPTED;
-    } else if (strcmp(query, REQUEST_DENIED) == 0) {
+    }
+    else if (strcmp(query, REQUEST_DENIED) == 0)
+    {
       file_content->is_blocked = REQUEST_DENIED;
-    } else {
+    }
+    else
+    {
       char *query_sep_ptr = query;
       char *line_index_str = strsep(&query_sep_ptr, QUERY_SEPERATOR);
       int line_index = atoi(line_index_str);
@@ -46,15 +48,15 @@ void *server_listener_thread_fn(void *ptr)
       process_query(file_content, user_name, line_index, action, modified_line);
 
       // Adding to log
-      char* log_user_name = malloc(sizeof(char) * (strlen(user_name) + 1));
-      char* log_modified_line = malloc(sizeof(char) * (strlen(modified_line) + 1));
+      char *log_user_name = malloc(sizeof(char) * (strlen(user_name) + 1));
+      char *log_modified_line = malloc(sizeof(char) * (strlen(modified_line) + 1));
 
       strcpy(log_user_name, user_name);
       strcpy(log_modified_line, modified_line);
 
       add_to_log(file_content, log_user_name, log_modified_line, line_index, action);
     }
-    
+
     free(query);
   }
   return NULL;

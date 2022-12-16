@@ -25,7 +25,7 @@ char *CURRENT_LINE;
 // MISC FUNCTIONS
 
 /*******************************************************************************
- * strstrip takes in the buffer char array and returns the buffer 
+ * strstrip takes in the buffer char array and returns the buffer
  *  without any leading or trailing spaces. Needed because forms.h adds whitespaces to the buffer/
  *
  * @param
@@ -53,7 +53,7 @@ char *strstrip(char *buffer)
 }
 
 /*******************************************************************************
- * print_text takes in the minimum line index on screen, the total number of lines in the display, and the file_content struct 
+ * print_text takes in the minimum line index on screen, the total number of lines in the display, and the file_content struct
  *      and prints out the maximum amount of lines possible on the display window, starting from the line with index min_line.
  *
  * @param
@@ -107,27 +107,30 @@ int print_log(int display_max_y, file_content_t *file_content)
     log_entry_t *current = file_content->log_head;
     int screen_index = 0;
     int log_index = 0;
-    while(current != NULL) {
+    while (current != NULL)
+    {
 
-        if (log_index < file_content->log_head->log_size - (display_max_y-1)) {
+        if (log_index < file_content->log_head->log_size - (display_max_y - 1))
+        {
             log_index++;
             continue;
-        } 
+        }
 
         // Map action to word
-        switch(current->action) {
-            case ACTION_APPEND:
-                full_action = "Appended";
-                break;
-            case ACTION_DELETE:
-                full_action = "Deleted";
-                break;
-            case ACTION_INSERT:
-                full_action = "Inserted";
-                break;
-            case ACTION_MODIFY:
-                full_action = "Modified";
-                break;
+        switch (current->action)
+        {
+        case ACTION_APPEND:
+            full_action = "Appended";
+            break;
+        case ACTION_DELETE:
+            full_action = "Deleted";
+            break;
+        case ACTION_INSERT:
+            full_action = "Inserted";
+            break;
+        case ACTION_MODIFY:
+            full_action = "Modified";
+            break;
         }
 
         // printing log
@@ -145,7 +148,7 @@ int print_log(int display_max_y, file_content_t *file_content)
 }
 
 /*******************************************************************************
- * As the name suggests, request_access requests access from the server to edit a line. 
+ * As the name suggests, request_access requests access from the server to edit a line.
  *      It does this by sending an edit request and waiting for the response.
  *      If access is granted, then returns true, else returns false.
  *
@@ -153,11 +156,12 @@ int print_log(int display_max_y, file_content_t *file_content)
  *    - file_content_t *file_content
  * @return bool
  ******************************************************************************/
-bool request_access(file_content_t *file_content) {
+bool request_access(file_content_t *file_content)
+{
     file_content->is_blocked = REQUEST_PENDING;
 
-    // Ask server to make changes 
-    char* request_line_message = query_constructor(file_content->user_name, CURRENT_LINE_INDEX, ACTION_REQUEST, " ");
+    // Ask server to make changes
+    char *request_line_message = query_constructor(file_content->user_name, CURRENT_LINE_INDEX, ACTION_REQUEST, " ");
     if (send_message(file_content->server_fd, request_line_message) == -1)
     {
         perror("Failed to send message to the server");
@@ -165,17 +169,18 @@ bool request_access(file_content_t *file_content) {
     }
 
     // Wait for response
-    while (strcmp(file_content->is_blocked, REQUEST_PENDING) == 0){
+    while (strcmp(file_content->is_blocked, REQUEST_PENDING) == 0)
+    {
         continue;
     }
 
     // If denied, return false
-    if (strcmp(file_content->is_blocked, REQUEST_DENIED) == 0) {
+    if (strcmp(file_content->is_blocked, REQUEST_DENIED) == 0)
+    {
         modify_action_display(-1, CURRENT_LINE_INDEX);
         return FALSE;
     }
 
-    
     return TRUE;
 }
 
@@ -188,12 +193,13 @@ bool request_access(file_content_t *file_content) {
  *    - char *new_line,
  *    - int line_index,
  *    - char action
- *    
+ *
  * @return void
  ******************************************************************************/
-void add_to_log(file_content_t *file_content, char *user_name, char *new_line, int line_index, char action) {
+void add_to_log(file_content_t *file_content, char *user_name, char *new_line, int line_index, char action)
+{
     // Building log entry
-    log_entry_t *new_log_entry = (log_entry_t *) malloc(sizeof(log_entry_t));
+    log_entry_t *new_log_entry = (log_entry_t *)malloc(sizeof(log_entry_t));
 
     new_log_entry->user_name = user_name;
     new_log_entry->new_line = new_line;
@@ -204,22 +210,24 @@ void add_to_log(file_content_t *file_content, char *user_name, char *new_line, i
     new_log_entry->last = NULL;
 
     // If log is empty, insert at head
-    if (file_content->log_head == NULL) {
+    if (file_content->log_head == NULL)
+    {
         file_content->log_head = new_log_entry;
         file_content->log_head->last = new_log_entry;
         file_content->log_head->log_size = 1;
-    } else {
+    }
+    else
+    {
         // Else, insert after last entry
         file_content->log_head->last->next = new_log_entry;
-        // Setting as new last node 
+        // Setting as new last node
         file_content->log_head->last = new_log_entry;
         // Increasing log size
         file_content->log_head->log_size++;
-    }   
+    }
 
     return;
 }
-
 
 /*******************************************************************************
  * modify_action_display takes in the current action and the current line index and
@@ -232,7 +240,8 @@ void add_to_log(file_content_t *file_content, char *user_name, char *new_line, i
  ******************************************************************************/
 void modify_action_display(char action, int line_index)
 {
-    if (action == -1) {
+    if (action == -1)
+    {
         werase(TEXT_FORM_BOX);
         mvwprintw(TEXT_FORM_BOX, 1, 2, "LINE [%d] LOCKED:", line_index);
         box(TEXT_FORM_BOX, 0, 0);
@@ -299,7 +308,7 @@ void screen_setup()
     // Accept keypad input
     keypad(stdscr, TRUE);
     // Makes it so that we read input char by char
-    //cbreak();
+    // cbreak();
     // Sets wait time for input in tenths of seconds
     halfdelay(2);
 
@@ -404,12 +413,11 @@ void misc_setup()
     wrefresh(MISC_BAR);
 }
 
-
 // DRIVERS
 
 /*******************************************************************************
  * text_box_driver handles all text_box user input. Handles keyboard input and typing.
- *      It also clears text form after typing. 
+ *      It also clears text form after typing.
  *      Also, sends out message to server with query and updates file_content.
  *      Returns true if user did not exit program, else false.
  *
@@ -422,7 +430,8 @@ bool text_box_driver(file_content_t *file_content)
     int ch;
 
     // Ask for access
-    if (ch != 'a' && ch != 'x' && !request_access(file_content)){
+    if (ch != 'a' && ch != 'x' && !request_access(file_content))
+    {
         return TRUE;
     }
 
@@ -443,8 +452,9 @@ bool text_box_driver(file_content_t *file_content)
             form_driver(text_form, REQ_NEXT_FIELD);
             form_driver(text_form, REQ_PREV_FIELD);
 
-            // If exporting, export and ignore query 
-            if (CURRENT_ACTION == ACTION_EXPORT) {
+            // If exporting, export and ignore query
+            if (CURRENT_ACTION == ACTION_EXPORT)
+            {
                 export_file_content(strstrip(field_buffer(fields[0], 0)), file_content);
 
                 // Success message
@@ -452,10 +462,12 @@ bool text_box_driver(file_content_t *file_content)
                 mvwprintw(TEXT_FORM_BOX, 1, 5, "SUCCESS:");
                 box(TEXT_FORM_BOX, 0, 0);
                 wrefresh(TEXT_FORM_BOX);
-            } else {
+            }
+            else
+            {
                 // Make changes
                 process_query(file_content, file_content->user_name, CURRENT_LINE_INDEX, CURRENT_ACTION, strstrip(field_buffer(fields[0], 0)));
-                
+
                 // Adding to log
                 add_to_log(file_content, file_content->user_name, strstrip(field_buffer(fields[0], 0)), CURRENT_LINE_INDEX, CURRENT_ACTION);
 
@@ -468,7 +480,7 @@ bool text_box_driver(file_content_t *file_content)
                 }
                 free(query);
             }
-            
+
             // Clearing form
             form_driver(text_form, REQ_CLR_FIELD);
 
@@ -517,7 +529,7 @@ bool text_box_driver(file_content_t *file_content)
  * line_selection_driver handles all line selection and action key input.
  *      It sets the current_action to the action specified by the user.
  *      Also, it sends line delete message in the event of line deletion.
- *      Takes file_content, the inputed character, and the total number of lines in file.   
+ *      Takes file_content, the inputed character, and the total number of lines in file.
  *
  * @param
  *    - file_content_t *file_content,
@@ -539,7 +551,8 @@ bool line_selection_driver(file_content_t *file_content, int ch, int max_line)
         CURRENT_ACTION = ACTION_DELETE;
 
         // Delete from local file content
-        if (max_line > 0 && request_access(file_content)) {
+        if (max_line > 0 && request_access(file_content))
+        {
             process_query(file_content, file_content->user_name, CURRENT_LINE_INDEX, CURRENT_ACTION, strstrip(field_buffer(fields[0], 0)));
 
             // Adding to log
@@ -582,8 +595,8 @@ bool line_selection_driver(file_content_t *file_content, int ch, int max_line)
 }
 
 /*******************************************************************************
- * display_driver handles all the high-level logic of the display. 
- *      It is a quasi-scheduler that prints the file content to the screen 
+ * display_driver handles all the high-level logic of the display.
+ *      It is a quasi-scheduler that prints the file content to the screen
  *      as long as the user hasn't inputed a character. Once it receives an input it passes it off to line_selection_driver.
  *      It also hands off control to the text_box_driver if it receives an action key.
  *      Returns true if user hasn't exited the program, else false.
@@ -622,7 +635,7 @@ bool display_driver(file_content_t *file_content)
         if (ch == KEY_UP || ch == KEY_DOWN)
             CURRENT_ACTION = ACTION_MODIFY;
         modify_action_display(CURRENT_ACTION, CURRENT_LINE_INDEX);
-        
+
         // Refresh display
         wrefresh(DISPLAY);
 
@@ -638,12 +651,13 @@ bool display_driver(file_content_t *file_content)
             CURRENT_LINE = "";
             return TRUE;
         }
-        else if (action_input && ch == 'x') {
+        else if (action_input && ch == 'x')
+        {
             CURRENT_LINE = file_content->file_name;
             return TRUE;
         }
         else if (ch == 27) // 27 is ASCII for escape key
-        { // Exiting program
+        {                  // Exiting program
             return FALSE;
         }
     };

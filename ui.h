@@ -22,4 +22,3 @@ bool display_driver(file_content_t *file_content);
 
 // MAIN THREAD FUNCTION
 void *ui_thread_handler(void *args);
-

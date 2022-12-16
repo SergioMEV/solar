@@ -206,14 +206,15 @@ void destroy_file_content(file_content_t *file_content)
     free(file_content->file_content_head[line_index]->owner);
     free(file_content->file_content_head[line_index]);
   }
-  
-  while(file_content->log_head != NULL) {
+
+  while (file_content->log_head != NULL)
+  {
     log_entry_t *temp = file_content->log_head;
     file_content->log_head = file_content->log_head->next;
-    
-    free(temp->user_name); 
-    free(temp->new_line); 
-    free(temp); 
+
+    free(temp->user_name);
+    free(temp->new_line);
+    free(temp);
   }
 
   free(file_content->file_content_head);
@@ -337,8 +338,7 @@ void export_file_content(char *file_name, file_content_t *file_content)
   free(export_text);
   fclose(fptr_dest);
 }
-// TODO parse query in the client!
-// "{user_name}\n{line_index}\n{action}\n{message}"
+
 void process_query(file_content_t *file_content, char *user_name,
                    int line_index, char action, char *modified_line_text)
 {
@@ -366,22 +366,3 @@ void clean_file_system(FILE *fptr, file_content_t *file_content)
   destroy_file_content(file_content);
   fclose(fptr);
 }
-
-// int main()
-// {
-//   char *file_name = "Archive/f1.txt";
-//   FILE *fptr = open_file_read_mode(file_name);
-//   file_content_t *file_content = init_file_content_with_file(file_name, 0, "student", fptr);
-//   print_file_content(file_content);
-
-//   // print_file_content(file_content);
-//   char *text = malloc(sizeof(char) * 100);
-//   strcpy(text, "inserting line here");
-//   process_query(file_content, "student", -1, ACTION_INSERT, text);
-//   print_file_content(file_content);
-//   // export_file_content("Archive/f2.txt", file_content);
-//   free(text);
-//   clean_file_system(fptr, file_content);
-
-//   return 0;
-// }
