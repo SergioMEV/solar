@@ -1,5 +1,6 @@
 #pragma once
 
+// All the constants used in other files
 #define LOCKED 1
 #define UNLOCKED 0
 

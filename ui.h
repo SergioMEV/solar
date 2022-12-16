@@ -1,6 +1,7 @@
 // MISC FUNCTIONS
-#include "file_system.h"
 #include <stdbool.h>
+
+#include "file_system.h"
 
 char *strstrip(char *str);
 int print_text(int min_line, int display_max_y, file_content_t *file_content);
@@ -22,4 +23,3 @@ bool display_driver(file_content_t *file_content);
 
 // MAIN THREAD FUNCTION
 void *ui_thread_handler(void *args);
-

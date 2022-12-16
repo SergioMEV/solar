@@ -11,12 +11,12 @@
 #include "file_system.h"
 #include "status_codes.h"
 #include "constants.h"
-// #include "query_util.h"
 
 // user information (fd and username)
 user_infos_array_t *user_infos_struct;
 file_content_t *file_content;
 
+// Listen to client query from the server
 void *client_listener_thread(void *user_info_void)
 {
   user_info_t *user_info = (user_info_t *)user_info_void;
