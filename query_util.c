@@ -8,7 +8,7 @@
 // Concatinate all inputs to one string variable.
 char *query_constructor(char *user_name, int line_index, char action, char *message)
 {
-  // "{line_num}\n{action}\n{user_name}\n{message}"
+  // "{line_num}~{action}~{user_name}~{message}"
   // we need three spaces for QUERY_SEPERATOR and one space for the null terminator at the end.
   char *combined_message = malloc(sizeof(char) * (strlen(user_name) + MAX_LINE_NUMBER_DIGITS + 1 + strlen(message) + 4));
   char *line_index_str = (char *)malloc(MAX_LINE_NUMBER_DIGITS * sizeof(char));

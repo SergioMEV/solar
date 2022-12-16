@@ -206,15 +206,14 @@ void destroy_file_content(file_content_t *file_content)
     free(file_content->file_content_head[line_index]->owner);
     free(file_content->file_content_head[line_index]);
   }
-
-  while (file_content->log_head != NULL)
-  {
+  
+  while(file_content->log_head != NULL) {
     log_entry_t *temp = file_content->log_head;
     file_content->log_head = file_content->log_head->next;
-
-    free(temp->user_name);
-    free(temp->new_line);
-    free(temp);
+    
+    free(temp->user_name); 
+    free(temp->new_line); 
+    free(temp); 
   }
 
   free(file_content->file_content_head);

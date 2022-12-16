@@ -48,8 +48,8 @@ void *server_listener_thread_fn(void *ptr)
       process_query(file_content, user_name, line_index, action, modified_line);
 
       // Adding to log
-      char *log_user_name = malloc(sizeof(char) * (strlen(user_name) + 1));
-      char *log_modified_line = malloc(sizeof(char) * (strlen(modified_line) + 1));
+      char* log_user_name = malloc(sizeof(char) * (strlen(user_name) + 1));
+      char* log_modified_line = malloc(sizeof(char) * (strlen(modified_line) + 1));
 
       strcpy(log_user_name, user_name);
       strcpy(log_modified_line, modified_line);

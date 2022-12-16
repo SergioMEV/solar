@@ -107,30 +107,27 @@ int print_log(int display_max_y, file_content_t *file_content)
     log_entry_t *current = file_content->log_head;
     int screen_index = 0;
     int log_index = 0;
-    while (current != NULL)
-    {
+    while(current != NULL) {
 
-        if (log_index < file_content->log_head->log_size - (display_max_y - 1))
-        {
+        if (log_index < file_content->log_head->log_size - (display_max_y-1)) {
             log_index++;
             continue;
-        }
+        } 
 
         // Map action to word
-        switch (current->action)
-        {
-        case ACTION_APPEND:
-            full_action = "Appended";
-            break;
-        case ACTION_DELETE:
-            full_action = "Deleted";
-            break;
-        case ACTION_INSERT:
-            full_action = "Inserted";
-            break;
-        case ACTION_MODIFY:
-            full_action = "Modified";
-            break;
+        switch(current->action) {
+            case ACTION_APPEND:
+                full_action = "Appended";
+                break;
+            case ACTION_DELETE:
+                full_action = "Deleted";
+                break;
+            case ACTION_INSERT:
+                full_action = "Inserted";
+                break;
+            case ACTION_MODIFY:
+                full_action = "Modified";
+                break;
         }
 
         // printing log
@@ -148,7 +145,7 @@ int print_log(int display_max_y, file_content_t *file_content)
 }
 
 /*******************************************************************************
- * As the name suggests, request_access requests access from the server to edit a line.
+ * As the name suggests, request_access requests access from the server to edit a line. 
  *      It does this by sending an edit request and waiting for the response.
  *      If access is granted, then returns true, else returns false.
  *
@@ -178,9 +175,11 @@ bool request_access(file_content_t *file_content)
     if (strcmp(file_content->is_blocked, REQUEST_DENIED) == 0)
     {
         modify_action_display(-1, CURRENT_LINE_INDEX);
+        free(request_line_message);
         return FALSE;
     }
 
+    free(request_line_message);
     return TRUE;
 }
 
@@ -193,13 +192,12 @@ bool request_access(file_content_t *file_content)
  *    - char *new_line,
  *    - int line_index,
  *    - char action
- *
+ *    
  * @return void
  ******************************************************************************/
-void add_to_log(file_content_t *file_content, char *user_name, char *new_line, int line_index, char action)
-{
+void add_to_log(file_content_t *file_content, char *user_name, char *new_line, int line_index, char action) {
     // Building log entry
-    log_entry_t *new_log_entry = (log_entry_t *)malloc(sizeof(log_entry_t));
+    log_entry_t *new_log_entry = (log_entry_t *) malloc(sizeof(log_entry_t));
 
     new_log_entry->user_name = user_name;
     new_log_entry->new_line = new_line;
@@ -210,22 +208,18 @@ void add_to_log(file_content_t *file_content, char *user_name, char *new_line, i
     new_log_entry->last = NULL;
 
     // If log is empty, insert at head
-    if (file_content->log_head == NULL)
-    {
+    if (file_content->log_head == NULL) {
         file_content->log_head = new_log_entry;
         file_content->log_head->last = new_log_entry;
         file_content->log_head->log_size = 1;
-    }
-    else
-    {
+    } else {
         // Else, insert after last entry
         file_content->log_head->last->next = new_log_entry;
-        // Setting as new last node
+        // Setting as new last node 
         file_content->log_head->last = new_log_entry;
         // Increasing log size
         file_content->log_head->log_size++;
-    }
-
+    }   
     return;
 }
 
@@ -308,7 +302,7 @@ void screen_setup()
     // Accept keypad input
     keypad(stdscr, TRUE);
     // Makes it so that we read input char by char
-    // cbreak();
+    //cbreak();
     // Sets wait time for input in tenths of seconds
     halfdelay(2);
 
@@ -467,6 +461,9 @@ bool text_box_driver(file_content_t *file_content)
             {
                 // Make changes
                 process_query(file_content, file_content->user_name, CURRENT_LINE_INDEX, CURRENT_ACTION, strstrip(field_buffer(fields[0], 0)));
+                
+                // Adding to log
+                add_to_log(file_content, file_content->user_name, strstrip(field_buffer(fields[0], 0)), CURRENT_LINE_INDEX, CURRENT_ACTION);
 
                 // Adding to log
                 add_to_log(file_content, file_content->user_name, strstrip(field_buffer(fields[0], 0)), CURRENT_LINE_INDEX, CURRENT_ACTION);
@@ -737,23 +734,3 @@ void *ui_thread_handler(void *args)
 
     return NULL;
 }
-
-// int main()
-// {
-//     pthread_t ui_thread;
-//     char *file_name = "Archive/f1.txt";
-//     FILE *fptr = open_file_read_mode(file_name);
-//     file_content_t *file_content = init_file_content_with_file(file_name, 0, "student testing", fptr);
-
-//     if (pthread_create(&ui_thread, NULL, ui_thread_handler, (void *)file_content))
-//     {
-//         perror("Couldn't create display thread:");
-//         exit(2);
-//     }
-
-//     if (pthread_join(ui_thread, NULL))
-//     {
-//         perror("Couldn't join display thread");
-//         exit(2);
-//     }
-// }
