@@ -472,9 +472,6 @@ bool text_box_driver(file_content_t *file_content)
         // Adding to log
         add_to_log(file_content, file_content->user_name, strstrip(field_buffer(fields[0], 0)), CURRENT_LINE_INDEX, CURRENT_ACTION);
 
-        // Adding to log
-        add_to_log(file_content, file_content->user_name, strstrip(field_buffer(fields[0], 0)), CURRENT_LINE_INDEX, CURRENT_ACTION);
-
         // Send line message to server
         char *query = query_constructor(file_content->user_name, CURRENT_LINE_INDEX, CURRENT_ACTION, strstrip(field_buffer(fields[0], 0)));
         if (send_message(file_content->server_fd, query) == -1)
