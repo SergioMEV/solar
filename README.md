@@ -44,7 +44,11 @@ To start editing, connect to the server created using the following commands:
 $ ./client <server name> <port> <user name>
 ```
 
-Insert your IP address in <servername> if you are running this program on a machine that is different from the one that created the server. If you are using a Grinnell computer, type the name of the machine to connect. If you are running the program on the same computer as the one that created the server, type `localhost` instead.
+Insert your IP address in `<servername>` if you are running this program on a machine that is different from the one that created the server. If you are using a Grinnell computer, type the name of the machine to connect instead. If you are running the program on the same computer as the one that created the server, type `localhost` instead.
+
+`<port>` is a 5-digit number created by the server.
+
+`<user name>` is the name that will appear on the log when you make changes to the file. Note the maximum length of `<user name>` is 20.
 
 An example running the program:
 
