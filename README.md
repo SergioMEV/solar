@@ -9,6 +9,8 @@ Solar is a command line shared text editor that is the final project for Grinnel
 - [General Info](#solar-shared-editor)
 - [Technologies](#technologies)
 - [Instruction](#instruction)
+- [Demo](#demo)
+- [Other information](#other-information)
 
 ## Technologies
 
