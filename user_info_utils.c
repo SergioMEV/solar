@@ -28,7 +28,6 @@ void user_infos_add_user(user_infos_array_t *user_infos_struct, user_info_t *use
 }
 
 /* Remove an user from the array */
-// TODO: what should we do if user_remove is not in the array?
 void user_infos_remove_user(user_infos_array_t *user_infos_struct, user_info_t *user_remove)
 {
     for (size_t index = 0; index < user_infos_struct->size; index++)
@@ -71,25 +70,3 @@ void user_infos_array_destroy(user_infos_array_t *user_infos_struct)
     }
     free(user_infos_struct);
 }
-
-// int main()
-// {
-//     user_info_t *u1 = malloc(sizeof(user_info_t));
-//     u1->user_name = "u1";
-//     u1->fd = 1;
-//     user_info_t *u2 = malloc(sizeof(user_info_t));
-//     u2->user_name = "u2";
-//     u2->fd = 1;
-//     user_info_t *u3 = malloc(sizeof(user_info_t));
-//     u3->user_name = "u3";
-//     u3->fd = 1;
-
-//     user_infos_array_t *user_infos_struct = user_infos_init();
-//     user_infos_add_element(user_infos_struct, u1);
-//     user_infos_add_element(user_infos_struct, u2);
-//     user_infos_add_element(user_infos_struct, u3);
-//     printf("%zu\n", user_infos_struct->size);
-//     printf("%zu\n", user_infos_struct->size);
-//     user_infos_destroy(user_infos_struct);
-//     return 0;
-// }

@@ -27,7 +27,7 @@ touch <filename>
 Complie the program using the following command:
 
 ```
-$ make
+make
 ```
 
 ### 3. Run server
